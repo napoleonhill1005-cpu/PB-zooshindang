@@ -236,9 +236,12 @@ function ps(key, p) {
 }
 
 // one-batch (×1) base total of ingredients counted in total; "match" (1:1 sugar) = sum of other counted liquids
+// 벌크·인퓨즈드는 컨테이너 최대 3.5kg 기준이라, 걸러내는 재료까지 포함한 '투입 총합'으로 맞춤
+const allIn = p => isBulkPrep(p) || isInfused(p);
+const counts = (p, i) => allIn(p) ? (i.u === 'g' && !i.f && i.k === 'normal') : i.t;
 function baseInfo(p) {
   let normal = 0;
-  p.ings.forEach(i => { if (i.t && i.k === 'normal') normal += i.a; });
+  p.ings.forEach(i => { if (counts(p, i) && i.k === 'normal') normal += i.a; });
   const hasMatch = p.ings.some(i => i.k === 'match');
   return { normal, hasMatch, base: hasMatch ? normal * 2 : normal };
 }
@@ -260,11 +263,13 @@ function calc(p, s) {
     }
     return { ...i, base: i.a, amt: i.f ? i.a : i.a * mult };
   });
-  const inputTotal = rows.reduce((t, r) => t + (r.t ? r.amt : 0), 0);
+  rows.forEach(r => r.cnt = counts(p, r));
+  const inputTotal = rows.reduce((t, r) => t + (r.cnt ? r.amt : 0), 0);
+  const strainedOut = allIn(p) ? rows.reduce((t, r) => t + (r.cnt && !r.t ? r.amt : 0), 0) : 0;
   // 1:1 syrup: finished syrup = strained liquid + same weight of sugar
   const m = rows.find(r => r.k === 'match');
   const finish = m ? m.amt * 2 : inputTotal * p.yf;
-  return { mult, rows, inputTotal, finish, bi, finishTarget };
+  return { mult, rows, inputTotal, finish, bi, finishTarget, strainedOut };
 }
 
 const fmt = (v, u) => {
@@ -413,17 +418,17 @@ function prepCard(g, p, idx) {
   else formula = `배수 = ${s.mode === 'bulk' ? '벌크 ' : s.mode === 'bottle' ? s.bottles + '병 × ' + bsize(s) + u + ' = ' : '목표 '}${fmt(c.finishTarget,u)}${u}` + (p.yf !== 1 ? ' ÷ 0.8(손실)' : '') + ` ÷ 1배합 합계 ${baseStr} = <b>×${fmtMult(c.mult)}</b>`;
 
   const rows = c.rows.map((r, i) => {
-    const pct = r.t && c.inputTotal && !c.bi.hasMatch ? (r.amt / c.inputTotal * 100) : null;
+    const pct = r.cnt && c.inputTotal && !c.bi.hasMatch ? (r.amt / c.inputTotal * 100) : null;
     let extra = '';
     if (r.k === 'match') extra = `<div class="match"><span>걸러낸 액체 무게</span><input data-k="${key}" data-f="strained" type="number" inputmode="decimal" placeholder="g" value="${esc(s.strained)}"></div>` + (r.estimated ? '<span class="est">예상치 · 걸러낸 무게 입력 시 1:1로 확정</span>' : '<span class="est">걸러낸 무게와 1:1</span>');
     return `<tr class="${s.done[i] ? 'done' : ''} ${isHit(r.n) ? 'hit' : ''}">
-      <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.f ? '<span class="x">고정량 · 만드는 양과 상관없음 (데치기용)</span>' : r.t ? '' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
+      <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.f ? '<span class="x">고정량 · 만드는 양과 상관없음 (데치기용)</span>' : r.t ? '' : r.cnt ? '<span class="x">나중에 걸러냄 · 투입 총합에 포함</span>' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
       <td class="num hide-m">${r.base === null ? '1:1' : fmt(r.base, r.u)}</td>
       <td class="num">${pct === null ? '–' : pct.toFixed(1) + '%'}</td>
       <td><span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}${extra}</td></tr>`;
   }).join('');
 
-  const tot = `<tr class="tot"><td>${p.yf !== 1 ? '투입 합계 → 완성량(×4/5)' : c.bi.hasMatch ? '완성 시럽 (걸러낸 액체 + 설탕)' : '총량'}</td><td class="num hide-m">${baseStr}</td><td class="num">100%</td>
+  const tot = `<tr class="tot"><td>${p.yf !== 1 ? '투입 합계 → 완성량(×4/5)' : c.bi.hasMatch ? '완성 시럽 (걸러낸 액체 + 설탕)' : c.strainedOut ? '투입 총합' : '총량'}${c.strainedOut ? `<span class="x">걸러낸 뒤 약 ${fmt(c.finish - c.strainedOut, u)}${u} 남음 (흡수량 별도)</span>` : ''}</td><td class="num hide-m">${baseStr}</td><td class="num">100%</td>
      <td><span class="amt">${p.yf !== 1 ? fmt(c.inputTotal,u) + '<small>' + u + '</small> → ' : ''}${fmt(c.finish, u)}<small>${u}</small></span>${kgLine(c.finish, u)}</td></tr>`;
 
   const hitCard = state.q.trim() && (isHit(p.name) || p.ings.some(i => isHit(i.n)));
