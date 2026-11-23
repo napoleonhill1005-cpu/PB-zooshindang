@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주신당 강남점 PB 프렙 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14110f; --panel:#1d1916; --panel2:#26211d; --line:#3a322b;
+  --ink:#f3ece3; --dim:#a89b8c; --faint:#6f6458;
+  --gold:#d9a441; --gold2:#f0c46a; --red:#e0664f; --green:#7fb77e;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:10;background:rgba(20,17,15,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top{max-width:980px;margin:0 auto;padding:14px 16px 10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:900;letter-spacing:-.02em;font-size:18px;margin-right:auto}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--dim);letter-spacing:.08em}
+.search{flex:1 1 220px;max-width:340px;position:relative}
+.search input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;outline:none}
+.search input:focus{border-color:var(--gold)}
+.bottle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--dim);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:5px 8px}
+.bottle input{width:62px;background:transparent;border:0;border-bottom:1px solid var(--faint);text-align:right;font-family:var(--mono);color:var(--gold2);outline:none}
+.chips{max-width:980px;margin:0 auto;padding:0 16px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#1a140d;font-weight:700}
+.chip.guide{border-style:dashed;color:var(--dim)}
+.chip.guide.on{color:#1a140d}
+main{max-width:980px;margin:0 auto;padding:18px 16px 80px}
+h1.cocktail{font-size:30px;font-weight:900;margin:4px 0 4px;letter-spacing:-.03em}
+.sub{color:var(--dim);font-size:13px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;margin-bottom:18px;overflow:hidden}
+.card-h{padding:16px 18px 12px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.card-h h2{margin:0;font-size:19px;font-weight:700}
+.tag{display:inline-block;font-size:11px;color:var(--gold2);border:1px solid #5a4422;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:2px;font-weight:500}
+.modes{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.modes button{background:none;border:0;padding:6px 11px;border-radius:7px;font-size:13px;color:var(--dim);cursor:pointer}
+.modes button.on{background:var(--ink);color:#1a140d;font-weight:700}
+.ctrl{padding:14px 18px;display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;background:#1a1613}
+.qty{display:flex;align-items:center;gap:8px}
+.qty{flex-wrap:wrap}
+.qty label{font-size:13px;color:var(--dim);white-space:nowrap}
+.qty .btn{white-space:nowrap}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2)}
+.step button{width:38px;height:40px;background:none;border:0;font-size:20px;cursor:pointer;color:var(--gold2)}
+.step button:active{background:var(--line)}
+.step input{width:84px;height:40px;text-align:center;background:transparent;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);font-family:var(--mono);font-size:18px;font-weight:700;outline:none}
+.formula{font-family:var(--mono);font-size:12.5px;color:var(--dim);line-height:1.6}
+.formula b{color:var(--gold2);font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;letter-spacing:.06em;color:var(--faint);font-weight:500;text-align:right;padding:9px 12px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;padding-left:18px}
+th:last-child,td:last-child{padding-right:18px}
+td{padding:11px 12px;border-bottom:1px solid #2c2621;text-align:right;vertical-align:middle;font-size:14px}
+tr.done td{opacity:.38}
+tr.done .amt{text-decoration:line-through}
+td.name{font-weight:500;cursor:pointer}
+td.name .x{display:block;font-size:11px;color:var(--faint);font-weight:400;margin-top:2px}
+.ck{display:inline-block;width:18px;height:18px;border:1.5px solid var(--faint);border-radius:5px;margin-right:9px;vertical-align:-4px;position:relative}
+tr.done .ck{background:var(--green);border-color:var(--green)}
+tr.done .ck::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid #14110f;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.num{font-family:var(--mono);color:var(--dim);font-size:13px}
+.amt{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--ink);white-space:nowrap}
+.amt small{font-size:12px;color:var(--dim);font-weight:500;margin-left:2px}
+.scale{display:block;font-size:10.5px;color:var(--faint);font-family:'Noto Sans KR';font-weight:400;margin-top:1px}
+.scale.hi{color:var(--gold)}
+tr.tot td{border-bottom:0;background:#221d19;font-weight:700}
+tr.tot .amt{color:var(--gold2)}
+.match{display:flex;align-items:center;gap:6px;justify-content:flex-end;margin-top:4px}
+.match input{width:84px;background:var(--panel2);border:1px solid var(--gold);border-radius:7px;padding:4px 6px;text-align:right;font-family:var(--mono);font-size:13px;outline:none}
+.match span{font-size:11px;color:var(--gold)}
+.est{font-size:10.5px;color:var(--gold);display:block}
+.body{padding:16px 18px 18px;display:grid;gap:14px}
+.box h3{margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:var(--faint);font-weight:500}
+.box p{margin:0;white-space:pre-line;line-height:1.75;font-size:14px}
+.box.note p{color:#e2d5c3}
+.box.fix{background:#2a1c17;border:1px solid #5c3125;border-radius:10px;padding:12px 14px}
+.box.fix h3{color:var(--red)}
+.box.fix li{font-size:13px;line-height:1.6;color:#f0cfc4;margin-bottom:3px}
+.box.fix ul{margin:0;padding-left:18px}
+.xl{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer;color:var(--dim)}
+.btn:hover{border-color:var(--gold);color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--ink);color:#1a140d;padding:9px 16px;border-radius:10px;font-weight:700;font-size:14px;transition:.2s;pointer-events:none}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.guide-card{padding:20px 22px}
+.guide-card h2{font-size:17px;margin:22px 0 8px;color:var(--gold2)}
+.guide-card h2:first-child{margin-top:0}
+.guide-card p{white-space:pre-line;line-height:1.85;font-size:14.5px;margin:0;color:#e2d5c3}
+.guide-card .warn{margin-top:22px;padding:14px;border-radius:10px;background:#2a1c17;border:1px solid #5c3125}
+.ico{display:inline-flex;align-items:center;justify-content:center;gap:3px;margin-left:8px;width:30px;height:28px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--dim);vertical-align:middle;text-decoration:none;cursor:pointer}
+.ico.liq{color:var(--gold2);border-color:#5a4422;background:#2b2216}
+.ico.prep{width:auto;padding:0 8px;font-size:11.5px;color:var(--green);border-color:#3c5a3b;background:#1c261c}
+.ico:active{transform:scale(.94)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:-8px 0 16px;align-items:center}
+.legend .ico{margin-left:0;margin-right:4px;pointer-events:none}
+.flash{animation:fl 1.2s}
+@keyframes fl{0%{box-shadow:0 0 0 2px var(--green)}100%{box-shadow:0 0 0 0 transparent}}
+tr.hit td{background:#2b2416}
+tr.hit td.name{color:var(--gold2)}
+.card.hitcard{border-color:#7a5a24}
+.cont{background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:7px 8px;font-size:13px}
+.kg{display:block;font-family:var(--mono);font-size:11.5px;color:var(--gold);margin-top:1px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%}
+.pre{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;color:var(--dim);cursor:pointer;font-family:var(--mono)}
+.pre.on{border-color:var(--gold);color:var(--gold2);background:#2b2216}
+.bulk{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:#2f4a2e;color:#bfe3bd;vertical-align:1px}
+.chip.on .bulk{background:#1a140d;color:var(--gold2)}
+.bulk.big{font-size:13px;padding:3px 9px;margin-left:10px;vertical-align:6px;font-weight:500}
+.listbtn{background:var(--gold);color:#1a140d;border:0;border-radius:10px;padding:9px 12px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.picker{max-width:980px;margin:0 auto;padding:16px 16px 0}
+.pgroup{margin-bottom:14px}
+.pgroup h4{margin:0 0 8px;font-size:11.5px;letter-spacing:.08em;color:var(--faint);font-weight:500}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.tile{min-width:0}
+.tile{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer;min-height:64px}
+.tile b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em}
+.tile small{display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.subt{background:#1b1f1a}
+.tile.on{background:var(--gold);border-color:var(--gold);color:#1a140d}
+.tile.on small{color:#4a3a20}
+.tile.on .bulk{background:#1a140d;color:var(--gold2)}
+.tile:active{transform:scale(.97)}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.sheet.on{display:flex}
+.sheet-in{background:var(--bg);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:980px;max-height:82vh;overflow:auto;padding:16px 16px 28px}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:16px}
+.fab{position:fixed;right:16px;bottom:18px;z-index:40;background:var(--gold);color:#1a140d;border:0;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer;display:none}
+.fab.on{display:block}
+@media (max-width:640px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.tile{padding:10px}.tile b{font-size:15.5px}.tile small{font-size:10.5px}.brand{order:1}.bottle{order:2}.search{order:3;flex:1 1 0;max-width:none}.listbtn{order:4}}
+.datebox{background:#1a2230;border:1px solid #2f3e57;border-radius:10px;padding:12px 14px}
+.datebox h3{color:#9fb6dc}
+.dl{display:flex;align-items:center;gap:12px}
+.sticker{font-family:var(--mono);font-weight:700;font-size:18px;background:#f3ece3;color:#14110f;border-radius:6px;padding:6px 10px;white-space:nowrap;box-shadow:2px 2px 0 rgba(0,0,0,.4)}
+.dl b{display:block;font-size:14px}
+.dl span{display:block;font-size:12px;color:var(--dim);margin-top:2px}
+.datebox .rule{font-size:11.5px;color:#7f93b5;margin-top:8px}
+.pour{display:flex;align-items:center;gap:12px}
+.pour b{display:block;font-size:16px}
+.pour span{display:block;font-size:13px;color:var(--dim);margin-top:3px}
+.over{flex-basis:100%;background:#3a1d16;border:1px solid var(--red);color:#ffd2c6;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500}
+.empty{color:var(--dim);padding:40px 0;text-align:center}
+@media (max-width:640px){
+  h1.cocktail{font-size:25px}
+  .hide-m{display:none}
+  td,th{padding-left:8px;padding-right:8px}
+  .amt{font-size:18px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">주신당 PB 프렙 계산기<small>PREP CALCULATOR @ 강남점</small></div>
+    <div class="search"><input id="q" type="search" placeholder="검색 (오타·띄어쓰기 OK · 예: 치즈폼, 배일리스, ㅂㅇㄹㅅ)"></div>
+    <button class="listbtn" id="listbtn" data-open="1"><span id="curname">쥐</span> ▾ 목록</button>
+  </div>
+</header>
+<section class="picker" id="picker"></section>
+<main id="main"></main>
+<div class="sheet" id="sheet"><div class="sheet-in"><div class="sheet-h"><b>칵테일 선택</b><button class="btn" data-close="1">닫기</button></div><div id="sheetgrid"></div></div></div>
+<button class="fab" id="fab" data-open="1">☰ 목록</button>
+<div class="toast" id="toast"></div>
+<script>
+const DATA = __DATA__;
+const state = { sel: DATA.groups[0].name, q: '', bottle: 500, preps: {} };
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const id = (g, i) => g + '__' + i;
+const LIQUOR = new Set(['감홍로','고든스','다카라 야마나시 화이트 피치','냉동 레벨 버번','디카이퍼 바나나','디카이퍼 크렘 드 카카오 브라운','론디아즈 151','마르텔 V.S.O.P 레드배럴 꼬냑','문경바람 오크 40','바카디 카르타 블랑카','범부','베일리스 오리지널','불독 진','삼해소주','생제르망','스톨리치나야 프리미엄','아치23','아치 23','아페롤','앙고스투라 오렌지 비터','와일드터키 81 버번','이강주','지파드 메론 리큐르','콰이페','탄두아이 다크 럼','탱자씨(40도)','파이어볼','화이트 와인']);
+const NO_IMG = new Set(['물','착즙 레몬주스 (거른 것)','착즙 라임주스 (거른 것)','레몬','오렌지','라임','파인애플','우유','생크림','백설탕','비름(없을 시 방아잎)','2:1 석류 시럽']);
+const QUERY = {'파라스 착즙 레몬주스':'파라스 레몬주스','솔리몬 스퀴즈드 라임주스':'솔리몬 라임주스','냉동 레벨 버번':'레벨 버번 Rebel bourbon','아치23':'아치23 술','아치 23':'아치23 술','범부':'범부 술','콰이페':'콰이페 술','탱자씨(40도)':'탱자씨 40도 술','고든스':'고든스 진','스톨리치나야 프리미엄':'스톨리치나야 보드카','감홍로':'감홍로 술','삼해소주':'삼해소주 병','이강주':'이강주 병','과육제거 나탈리스 자몽주스':'나탈리스 자몽주스'};
+const BOTTLE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v4l1.5 2.5A3 3 0 0 1 16 10v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V10a3 3 0 0 1 .5-1.5L10 6z"/><path d="M8 13h8"/></svg>';
+const SEARCH = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>';
+function prepIndex(name) {
+  const norm = s => s.replace(/\s+/g, '');
+  for (const g of [...DATA.groups.filter(x => x.sub), ...DATA.groups]) for (let i = 0; i < g.preps.length; i++) if (norm(g.preps[i].name) === norm(name)) return id(g.name, i);
+  return null;
+}
+function nameExtra(n) {
+  const pk = prepIndex(n);
+  if (pk) return `<button class="ico prep" data-jump="${esc(pk)}" title="이 프렙 레시피로 이동">↳ 레시피</button>`;
+  if (NO_IMG.has(n)) return '';
+  const q = encodeURIComponent(QUERY[n] || n.replace(/\(.*?\)/g, '').trim());
+  const liq = LIQUOR.has(n);
+  return `<a class="ico ${liq ? 'liq' : ''}" href="https://www.google.com/search?tbm=isch&q=${q}" target="_blank" rel="noopener" title="${liq ? '술 병 사진 찾기' : '제품 사진 찾기'}">${liq ? BOTTLE : SEARCH}</a>`;
+}
+const BULK_MAX = 3500;
+// 날짜 기입 규칙 (PREP GUIDE 4. 소비기한의 관리)
+const DAIRY = /우유|생크림|요구르트|요거트/;
+function dateRule(p) {
+  if (/레몬주스|라임주스/.test(p.name) && p.name.startsWith('프레쉬')) return { kind: 'citrus', where: '병에', what: '착즙일', rule: '시트러스 착즙류 → 착즙일(영업개시일 기준) 기입' };
+  const dairy = p.ings.filter(i => DAIRY.test(i.n)).map(i => i.n.trim());
+  if (dairy.length) return { kind: 'dairy', where: '병 아래에', what: 'Exp + 유제품 소비기한', rule: '유제품이 들어가는 Prep → 병 아래에 Exp 유제품 소비기한 기입 (Exp = Expiration Date)', dairy };
+  return { kind: 'plain', where: '병 아래에', what: '제조일', rule: '유제품이 들어가지 않는 Prep → 병 아래에 제조일(영업개시일 기준) 기입' };
+}
+// 영업개시일: 새벽 6시 전이면 전날 영업일로 봄
+function bizDate() { const d = new Date(); if (d.getHours() < 6) d.setDate(d.getDate() - 1); return `${d.getMonth() + 1}/${d.getDate()}`; }
+function dateBox(p) {
+  const r = dateRule(p), today = bizDate();
+  const label = r.kind === 'dairy' ? 'Exp __/__' : today;
+  const sub = r.kind === 'dairy' ? `__/__ 자리에 ${r.dairy.join(', ')} 팩에 적힌 소비기한을 적기` : `오늘(영업개시일 기준) 만들면 이렇게 적기`;
+  return `<div class="box datebox"><h3>날짜 기입</h3><div class="dl"><span class="sticker">${esc(label)}</span><div><b>${r.where} ${r.what}</b><span>${esc(sub)}</span></div></div><p class="rule">${esc(r.rule)} · EX) ${r.kind === 'dairy' ? 'Exp 8/7' : '8/7'}</p></div>`;
+}
+const BULK_GROUPS = new Set(['소','호랑이','뱀','말','원숭이','닭','돼지']);
+const bulkTag = n => BULK_GROUPS.has(n) ? '<span class="bulk">벌크</span>' : '';
+const CONTAINERS = { pb: ['PB 병', 500], syrup: ['시럽 큰 병', 500], squeeze: ['스퀴즈 바틀', 450], small: ['작은 병', 300] };
+const DEFAULT_CONT = { '쥐 치즈 폼': 'squeeze', '블루 레몬 인퓨젼': 'squeeze', '누룽지 시럽': 'syrup', '작두콩 시럽': 'syrup', '프레쉬 레몬주스': 'small', '프레쉬 라임주스': 'small' };
+const bsize = s => CONTAINERS[s.cont][1] ?? state.bottle;
+const isInfused = p => p.name.includes('인퓨즈드');
+const isMain = p => / Prep$/.test(p.name) || p.name === '호랑이 PB' || p.name.startsWith('플럼&요거트');
+
+function ps(key, p) {
+  if (!state.preps[key]) state.preps[key] = {
+    mode: isMain(p) || DEFAULT_CONT[p.name] ? 'bottle' : 'target', tunit: isInfused(p) ? 'kg' : 'g', cont: DEFAULT_CONT[p.name] || 'pb',
+    bottles: 1, target: null, mult: p.mult, strained: '', done: {}
+  };
+  const s0 = state.preps[key];
+  if (s0.target === null && isInfused(p)) s0.target = BULK_MAX;
+  if (s0.target === null) { const c0 = calc(p, { mode: 'mult', mult: p.mult, strained: '' }); s0.target = Math.round(c0.finish * 100) / 100; }
+  return state.preps[key];
+}
+
+// one-batch (×1) base total of ingredients counted in total; "match" (1:1 sugar) = sum of other counted liquids
+function baseInfo(p) {
+  let normal = 0;
+  p.ings.forEach(i => { if (i.t && i.k === 'normal') normal += i.a; });
+  const hasMatch = p.ings.some(i => i.k === 'match');
+  return { normal, hasMatch, base: hasMatch ? normal * 2 : normal };
+}
+
+function calc(p, s) {
+  const bi = baseInfo(p);
+  let mult, finishTarget = null;
+  if (s.mode === 'mult') mult = +s.mult || 0;
+  else {
+    finishTarget = s.mode === 'bottle' ? (+s.bottles || 0) * bsize(s) : (+s.target || 0);
+    mult = bi.base ? finishTarget / p.yf / bi.base : 0;
+  }
+  const strained = parseFloat(s.strained);
+  const rows = p.ings.map(i => {
+    if (i.k === 'match') {
+      const est = bi.normal * mult;
+      const real = strained > 0 ? strained : null;
+      return { ...i, base: null, amt: real ?? est, estimated: real === null };
+    }
+    return { ...i, base: i.a, amt: i.a * mult };
+  });
+  const inputTotal = rows.reduce((t, r) => t + (r.t ? r.amt : 0), 0);
+  // 1:1 syrup: finished syrup = strained liquid + same weight of sugar
+  const m = rows.find(r => r.k === 'match');
+  const finish = m ? m.amt * 2 : inputTotal * p.yf;
+  return { mult, rows, inputTotal, finish, bi, finishTarget };
+}
+
+const fmt = (v, u) => {
+  if (u === '개') return (Math.round(v * 100) / 100).toLocaleString('ko-KR');
+  const d = Math.abs(v) < 10 ? 2 : 1;
+  return v.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+};
+const fmtMult = m => (Math.round(m * 1000) / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 3 });
+
+// scale suggestion from PREP GUIDE (0.01g 초정밀 / 0.1g ~1,000g 정밀 / 5g ~10,000g 벌크)
+const kgLine = (v, u) => u === 'g' && v >= 1000 ? `<span class="kg">= ${(v / 1000).toLocaleString('ko-KR', { maximumFractionDigits: 3 })}kg</span>` : '';
+function scaleHint(v, u) {
+  if (u !== 'g' || !(v > 0)) return '';
+  if (v < 5) return '<span class="scale hi">초정밀 저울(0.01g)</span>';
+  if (v <= 1000) return '<span class="scale">정밀 저울</span>';
+  const bulk = Math.floor(v / 5) * 5, rest = v - bulk;
+  return `<span class="scale">벌크 ${bulk.toLocaleString('ko-KR')}g` + (rest > 0.05 ? ` + 정밀 ${fmt(rest,'g')}g` : '') + '</span>';
+}
+
+// ---- forgiving search: spaces/punctuation ignored, 자모 단위 오타 허용, 초성 검색 ----
+const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const SAME = {'ㅐ':'ㅔ','ㅒ':'ㅖ','ㅙ':'ㅞ','ㅚ':'ㅞ'};   // 자주 헷갈리는 모음은 같은 걸로 취급 (배일리스 = 베일리스)
+const ALIAS = {'baileys':'베일리스','bailey':'베일리스','gordons':'고든스','gin':'진','vodka':'보드카','rum':'럼','bourbon':'버번','syrup':'시럽','prep':'프렙','pb':'프렙','cheese':'치즈','foam':'폼'};
+function clean(s) {
+  let x = String(s).toLowerCase().replace(/[\s\-_.,·:;()/&*'"!?~]+/g, '');
+  for (const [en, ko] of Object.entries(ALIAS)) x = x.split(en).join(ko);
+  return x;
+}
+function jamo(s) {
+  let out = '';
+  for (const ch of clean(s)) {
+    const c = ch.charCodeAt(0) - 0xAC00;
+    if (c >= 0 && c < 11172) {
+      const v = JUNG[Math.floor((c % 588) / 28)];
+      out += CHO[Math.floor(c / 588)] + (SAME[v] || v) + JONG[c % 28];
+    } else out += SAME[ch] || ch;
+  }
+  return out;
+}
+function chosung(s) {
+  let out = '';
+  for (const ch of clean(s)) { const c = ch.charCodeAt(0) - 0xAC00; out += (c >= 0 && c < 11172) ? CHO[Math.floor(c / 588)] : ch; }
+  return out;
+}
+// best edit distance of q against any substring of text (Sellers)
+function subDist(q, text) {
+  let prev = new Array(q.length + 1);
+  for (let i = 0; i <= q.length; i++) prev[i] = i;
+  let best = prev[q.length];
+  for (let j = 1; j <= text.length; j++) {
+    const cur = [0];
+    for (let i = 1; i <= q.length; i++)
+      cur[i] = Math.min(prev[i] + 1, cur[i - 1] + 1, prev[i - 1] + (q[i - 1] === text[j - 1] ? 0 : 1));
+    best = Math.min(best, cur[q.length]); prev = cur;
+  }
+  return best;
+}
+const searchCache = new Map();
+function prepJ(s) { if (!searchCache.has(s)) searchCache.set(s, { j: jamo(s), c: chosung(s) }); return searchCache.get(s); }
+// score: 0 = exact substring, higher = fuzzier, Infinity = no match
+function score(q, text) {
+  const qj = jamo(q); if (!qj) return 0;
+  const T = prepJ(text);
+  if (T.j.includes(qj)) return 0;
+  if (/^[ㄱ-ㅎ]+$/.test(clean(q)) && T.c.includes(clean(q))) return 0.5;
+  const allow = qj.length <= 5 ? 0 : qj.length <= 8 ? 1 : qj.length <= 12 ? 2 : 3;
+  if (!allow) return Infinity;
+  const d = subDist(qj, T.j);
+  return d <= allow ? d : Infinity;
+}
+function groupScore(g) {
+  const q = state.q.trim(); if (!q) return 0;
+  let best = score(q, g.name);
+  for (const p of g.preps) { best = Math.min(best, score(q, p.name)); for (const i of p.ings) best = Math.min(best, score(q, i.n)); }
+  return best;
+}
+const isHit = text => state.q.trim() && score(state.q.trim(), text) < Infinity;
+function matchesQ(g) { return groupScore(g) < Infinity; }
+
+const isInfSub = g => g.sub && (isInfused(g.preps[0]) || g.name.includes('팻워시드'));
+const SECTIONS = [
+  ['벌크 운용', g => !g.sub && BULK_GROUPS.has(g.name)],
+  ['일반', g => !g.sub && !BULK_GROUPS.has(g.name) && g.name !== '시트러스 주스'],
+  ['부재료 · 시럽 · 폼 · 주스', g => g.sub && !g.pour && !isInfSub(g)],
+  ['인퓨즈드 술', g => isInfSub(g) && !g.pour],
+  ['그냥 붓기만 (프렙 없음)', g => !!g.pour],
+  ['가이드', () => false]];
+function short(n) { return n.replace(/ Prep$/, '').replace(/인퓨즈드/g, '').replace(/\s+/g, ' ').trim(); }
+function tilesHTML() {
+  let groups = DATA.groups.filter(g => g.name !== '시트러스 주스').map(g => [g, groupScore(g) - (state.q.trim() && score(state.q.trim(), g.name) < Infinity ? 0.25 : 0)]).filter(x => x[1] < Infinity);
+  const searching = !!state.q.trim();
+  if (searching) groups.sort((a, b) => a[1] - b[1]);
+  if (searching && groups.length && state.sel !== '__guide') state.sel = groups[0][0].name;
+  const tile = g => `<button class="tile ${g.sub ? 'subt' : ''} ${g.name === state.sel ? 'on' : ''}" data-g="${esc(g.name)}"><b>${esc(g.name)}${bulkTag(g.name)}</b><small>${g.pour ? '붓기만 · ' + esc(g.parent) : g.sub ? (g.parent ? '→ ' + esc(g.parent) + '에 사용' : '칵테일 공용') : g.preps.map(p => esc(short(p.name))).join(' · ')}</small></button>`;
+  const guide = `<button class="tile ${state.sel === '__guide' ? 'on' : ''}" data-g="__guide"><b>PREP GUIDE</b><small>저울·기물·소비기한</small></button>`;
+  if (searching) return `<div class="pgroup"><h4>검색 결과 ${groups.length}개</h4><div class="tiles">${groups.map(x => tile(x[0])).join('') || '<span class="sub">없음</span>'}</div></div>`;
+  return SECTIONS.map(([label, f]) => {
+    const gs = DATA.groups.filter(f);
+    return `<div class="pgroup"><h4>${label}</h4><div class="tiles">${gs.map(tile).join('')}${label === '가이드' ? guide : ''}</div></div>`;
+  }).join('');
+}
+function renderChips() {
+  const h = tilesHTML();
+  document.getElementById('picker').innerHTML = h;
+  document.getElementById('sheetgrid').innerHTML = h;
+  document.getElementById('curname').textContent = state.sel === '__guide' ? 'PREP GUIDE' : state.sel;
+}
+
+function renderGuide() {
+  const it = DATA.guide;
+  let h = '<h1 class="cocktail">PREP GUIDE</h1><div class="sub">저울 사용·보관, 기물 관리, 소비기한 표기 규칙</div><div class="card guide-card">';
+  for (let i = 0; i < it.length; i++) {
+    if (/^\d+\./.test(it[i])) h += `<h2>${esc(it[i])}</h2>`;
+    else if (it[i].startsWith('*')) h += `<div class="warn"><p>${esc(it[i])}</p></div>`;
+    else h += `<p>${esc(it[i])}</p>`;
+  }
+  return h + '</div>';
+}
+
+function pourCard(p, parent) {
+  return `<section class="card"><div class="card-h"><h2>${esc(p.name)}<span class="tag">붓기만</span></h2></div>
+    <div class="body"><div class="pour"><a class="ico liq" style="margin:0" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(p.q)}" target="_blank" rel="noopener">${BOTTLE}</a>
+    <div><b>${esc(p.product)}</b><span>따로 만들 것 없음 · 제품 그대로 계량해서 붓기 · ${esc(parent)} 칵테일에 사용</span></div></div></div></section>`;
+}
+function prepCard(g, p, idx) {
+  if (p.pour) return pourCard(p, g.parent);
+  const key = id(g.name, idx), s = ps(key, p), c = calc(p, s), u = p.unit;
+  const unitLabel = `<select class="cont" data-k="${key}" data-f="cont">${Object.entries(CONTAINERS).map(([k2, [l, v]]) => `<option value="${k2}" ${s.cont === k2 ? 'selected' : ''}>${l} ${(v ?? state.bottle).toLocaleString('ko-KR')}${u}</option>`).join('')}</select>`;
+  let ctrl = '';
+  if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="number" inputmode="decimal" step="0.5" min="0" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label><button class="btn" data-k="${key}" data-act="max">최대 ${Math.floor(BULK_MAX / bsize(s) * 2) / 2}병</button></div>`;
+  else if (s.mode === 'target') {
+    const kg = s.tunit === 'kg' && u === 'g';
+    const shown = kg ? Math.round((+s.target || 0) / 10) / 100 : s.target;
+    const presets = u === 'g' ? [500, 1000, 2000, 3000, 3500] : [500, 1000, 2000, 3500];
+    ctrl = `<div class="qty"><label>만들 양</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="targetIn" type="number" inputmode="decimal" step="${kg ? 0.1 : 50}" min="0" value="${shown}" style="width:96px"><button data-k="${key}" data-act="inc">+</button></div>` +
+      (u === 'g' ? `<div class="modes"><button data-k="${key}" data-tu="g" class="${kg ? '' : 'on'}">g</button><button data-k="${key}" data-tu="kg" class="${kg ? 'on' : ''}">kg</button></div>` : `<label>${u}</label>`) +
+      `</div><div class="presets">${presets.map(v => `<button class="pre ${Math.abs((+s.target||0) - v) < 0.01 ? 'on' : ''}" data-k="${key}" data-pre="${v}">${v >= 1000 && u === 'g' ? v / 1000 + 'kg' : v.toLocaleString('ko-KR') + u}${v === BULK_MAX ? ' 최대' : ''}</button>`).join('')}</div>`;
+  }
+  else ctrl = `<div class="qty"><label>배수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="mult" type="number" inputmode="decimal" step="1" min="0" value="${s.mult}"><button data-k="${key}" data-act="inc">+</button></div><label>엑셀 기본 ×${fmtMult(p.mult)}</label></div>`;
+
+  const baseStr = fmt(c.bi.base, u) + u;
+  let formula;
+  if (s.mode === 'mult') formula = `1배합 합계 ${baseStr} × <b>${fmtMult(c.mult)}</b> = 투입 ${fmt(c.inputTotal,u)}${u}` + (p.yf !== 1 ? ` → ×4/5 완성 <b>${fmt(c.finish,u)}${u}</b>` : '');
+  else formula = `배수 = ${s.mode === 'bottle' ? s.bottles + '병 × ' + bsize(s) + u + ' = ' : '목표 '}${fmt(c.finishTarget,u)}${u}` + (p.yf !== 1 ? ' ÷ 0.8(손실)' : '') + ` ÷ 1배합 합계 ${baseStr} = <b>×${fmtMult(c.mult)}</b>`;
+
+  const rows = c.rows.map((r, i) => {
+    const pct = r.t && c.inputTotal && !c.bi.hasMatch ? (r.amt / c.inputTotal * 100) : null;
+    let extra = '';
+    if (r.k === 'match') extra = `<div class="match"><span>걸러낸 액체 무게</span><input data-k="${key}" data-f="strained" type="number" inputmode="decimal" placeholder="g" value="${esc(s.strained)}"></div>` + (r.estimated ? '<span class="est">예상치 · 걸러낸 무게 입력 시 1:1로 확정</span>' : '<span class="est">걸러낸 무게와 1:1</span>');
+    return `<tr class="${s.done[i] ? 'done' : ''} ${isHit(r.n) ? 'hit' : ''}">
+      <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.t ? '' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
+      <td class="num hide-m">${r.base === null ? '1:1' : fmt(r.base, r.u)}</td>
+      <td class="num">${pct === null ? '–' : pct.toFixed(1) + '%'}</td>
+      <td><span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}${extra}</td></tr>`;
+  }).join('');
+
+  const tot = `<tr class="tot"><td>${p.yf !== 1 ? '투입 합계 → 완성량(×4/5)' : c.bi.hasMatch ? '완성 시럽 (걸러낸 액체 + 설탕)' : '총량'}</td><td class="num hide-m">${baseStr}</td><td class="num">100%</td>
+     <td><span class="amt">${p.yf !== 1 ? fmt(c.inputTotal,u) + '<small>' + u + '</small> → ' : ''}${fmt(c.finish, u)}<small>${u}</small></span>${kgLine(c.finish, u)}</td></tr>`;
+
+  const hitCard = state.q.trim() && (isHit(p.name) || p.ings.some(i => isHit(i.n)));
+  return `<section class="card ${hitCard ? 'hitcard' : ''}" id="c-${key}" data-pname="${esc(p.name)}">
+    <div class="card-h"><h2>${esc(p.name)}${isMain(p) ? '<span class="tag">PB</span>' : ''}</h2>
+</div>
+    <div class="ctrl">${ctrl}<div class="formula">${formula}</div>${c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
+    <table><thead><tr><th>재료 (탭해서 체크)</th><th class="hide-m">1배합</th><th>비율</th><th>넣을 양</th></tr></thead><tbody>${rows}${tot}</tbody></table>
+    <div class="body">
+      ${dateBox(p)}
+      ${p.method ? `<div class="box"><h3>기법</h3><p>${esc(p.method)}</p></div>` : ''}
+      ${p.notes ? `<div class="box note"><h3>주의사항</h3><p>${esc(p.notes)}</p></div>` : ''}
+      ${p.fix.length ? `<div class="box fix"><h3>엑셀 대비 수정·확인 사항</h3><ul>${p.fix.map(f => `<li>${esc(f)}</li>`).join('')}</ul></div>` : ''}
+      <div class="actions"><button class="btn" data-k="${key}" data-act="copy">계량표 복사</button><button class="btn" data-k="${key}" data-act="reset">체크 초기화</button><span class="xl" style="align-self:center">엑셀 원본: 총량 수식 ${esc(p.xl)} · 기본 배수 ×${fmtMult(p.mult)} · 기본량 ${fmt(calc(p,{mode:'mult',mult:p.mult,strained:''}).finish,p.unit)}${p.unit}</span></div>
+    </div></section>`;
+}
+
+function render() {
+  renderChips();
+  const m = document.getElementById('main');
+  if (state.sel === '__guide') { m.innerHTML = renderGuide(); return; }
+  const groups = DATA.groups.filter(matchesQ);
+  if (!groups.length) { m.innerHTML = '<div class="empty">검색 결과가 없어</div>'; return; }
+  const g = DATA.groups.find(x => x.name === state.sel) || groups[0];
+  const n = g.preps.length;
+  if (g.pour) { m.innerHTML = `<h1 class="cocktail">${esc(g.name)}</h1><div class="sub">프렙 없이 붓기만 하는 재료 · <b>${esc(g.parent)}</b> 칵테일에 사용</div>` + prepCard(g, g.preps[0], 0); return; }
+  m.innerHTML = `<h1 class="cocktail">${esc(g.name)}${BULK_GROUPS.has(g.name) ? '<span class="bulk big">주로 벌크로 운용</span>' : ''}</h1><div class="sub">${g.sub ? (g.parent ? `<b>${esc(g.parent)}</b> 칵테일에 들어가는 부재료 · ` : '칵테일 공용 부재료 · ') : `프렙 ${n}개 · `} 병 수(병 종류 선택 가능) 또는 만들 g만 넣으면 재료별 양이 계산됨 · 재료를 탭하면 계량 완료 체크</div>
+    <div class="legend"><span><span class="ico liq">${BOTTLE}</span>술 병 사진</span><span><span class="ico">${SEARCH}</span>제품 사진</span><span><span class="ico prep">↳ 레시피</span>직접 만드는 프렙으로 이동</span></div>` +
+    g.preps.map((p, i) => prepCard(g, p, i)).join('');
+}
+
+function findPrep(key) {
+  const [gn, i] = key.split('__');
+  const g = DATA.groups.find(x => x.name === gn);
+  return g.preps[+i];
+}
+function rerenderCard(key) {
+  const [gn, i] = key.split('__');
+  const g = DATA.groups.find(x => x.name === gn);
+  const el = document.getElementById('c-' + key);
+  const focused = document.activeElement;
+  const f = focused && focused.dataset ? focused.dataset.f : null;
+  const pos = focused && focused.selectionStart;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = prepCard(g, g.preps[+i], +i);
+  el.replaceWith(tmp.firstElementChild);
+  if (f) { const ni = document.querySelector(`[data-k="${CSS.escape(key)}"][data-f="${f}"]`); if (ni) { ni.focus(); try { ni.setSelectionRange(pos, pos); } catch(e) {} } }
+}
+
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 1600); }
+
+document.addEventListener('click', e => {
+  if (e.target.closest('a.ico')) return;
+  const tu = e.target.closest('[data-tu]');
+  if (tu) { const k = tu.dataset.k; ps(k, findPrep(k)).tunit = tu.dataset.tu; rerenderCard(k); return; }
+  const pr = e.target.closest('[data-pre]');
+  if (pr) { const k = pr.dataset.k; ps(k, findPrep(k)).target = +pr.dataset.pre; rerenderCard(k); return; }
+  const jb = e.target.closest('[data-jump]');
+  if (jb) {
+    const here = [...document.querySelectorAll('main section.card')].find(sc => sc.dataset.pname && findPrep(jb.dataset.jump) && sc.dataset.pname === findPrep(jb.dataset.jump).name);
+    if (here) { here.scrollIntoView({ behavior: 'smooth', block: 'start' }); here.classList.remove('flash'); void here.offsetWidth; here.classList.add('flash'); return; }
+    const k = jb.dataset.jump, gname = k.split('__')[0];
+    if (state.sel !== gname) { state.sel = gname; state.q = ''; document.getElementById('q').value = ''; render(); }
+    const el = document.getElementById('c-' + k);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+    return;
+  }
+  if (e.target.closest('[data-open]')) { renderChips(); document.getElementById('sheet').classList.add('on'); return; }
+  if (e.target.closest('[data-close]') || e.target.id === 'sheet') { document.getElementById('sheet').classList.remove('on'); return; }
+  const tileEl = e.target.closest('.tile');
+  if (tileEl) {
+    state.sel = tileEl.dataset.g; document.getElementById('sheet').classList.remove('on'); render();
+    const m = document.getElementById('main'); const y = m.getBoundingClientRect().top + window.scrollY - document.querySelector('header').offsetHeight - 6;
+    window.scrollTo({ top: y, behavior: 'smooth' }); return;
+  }
+  const mb = e.target.closest('[data-mode]');
+  if (mb) { const k = mb.dataset.k; ps(k, findPrep(k)).mode = mb.dataset.mode; rerenderCard(k); return; }
+  const nm = e.target.closest('td.name');
+  if (nm) { const k = nm.dataset.k, s = ps(k, findPrep(k)); s.done[nm.dataset.i] = !s.done[nm.dataset.i]; rerenderCard(k); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a) return;
+  const k = a.dataset.k, p = findPrep(k), s = ps(k, p);
+  if (a.dataset.act === 'inc' || a.dataset.act === 'dec') {
+    const d = a.dataset.act === 'inc' ? 1 : -1;
+    if (s.mode === 'bottle') s.bottles = Math.max(0, (+s.bottles || 0) + d * 0.5);
+    else if (s.mode === 'target') s.target = Math.max(0, Math.round(((+s.target || 0) + d * (s.tunit === 'kg' ? 100 : 50)) * 100) / 100);
+    else s.mult = Math.max(0, Math.round(((+s.mult || 0) + d) * 1000) / 1000);
+    rerenderCard(k);
+  } else if (a.dataset.act === 'max') {
+    if (s.mode === 'bottle') s.bottles = Math.floor(BULK_MAX / bsize(s) * 2) / 2; else s.target = BULK_MAX;
+    rerenderCard(k);
+  } else if (a.dataset.act === 'reset') { s.done = {}; rerenderCard(k); }
+  else if (a.dataset.act === 'copy') {
+    const c = calc(p, s), u = p.unit;
+    const head = s.mode === 'bottle' ? `${s.bottles}병 (${CONTAINERS[s.cont][0]} ${bsize(s)}${u})` : (u === 'g' && +s.target >= 1000 ? `${s.target / 1000}kg (${s.target}g)` : `${s.target}${u}`);
+    const txt = `[${p.name}] ${head} (배수 ×${fmtMult(c.mult)})\n` + c.rows.map(r => `- ${r.n}: ${fmt(r.amt, r.u)}${r.u}${r.k === 'match' && r.estimated ? ' (예상, 걸러낸 무게와 1:1)' : ''}`).join('\n') + `\n= 총 ${fmt(c.finish, u)}${u}`;
+    navigator.clipboard.writeText(txt).then(() => toast('복사됨')).catch(() => toast('복사가 막혀 있어. 길게 눌러 선택해줘'));
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'q') {
+    state.q = t.value; render();
+    clearTimeout(window._sq); window._sq = setTimeout(() => { const h = document.querySelector('.card.hitcard'); if (h && state.q.trim()) h.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 350);
+    return;
+  }
+  if (t.dataset.f === 'targetIn') { const k = t.dataset.k, s = ps(k, findPrep(k)); const v = parseFloat(t.value); s.target = isNaN(v) ? '' : (s.tunit === 'kg' ? v * 1000 : v); rerenderCard(k); return; }
+  if (t.dataset.f) { const k = t.dataset.k; ps(k, findPrep(k))[t.dataset.f] = t.value; rerenderCard(k); }
+});
+// 부재료(시럽·폼·인퓨전·주스)를 칵테일 밖에서도 따로 볼 수 있게 독립 항목으로 추가
+(function addSubGroups() {
+  const subs = [];
+  DATA.groups.forEach(g => g.preps.forEach(p => {
+    if (isMain(p)) return;
+    subs.push({ name: p.name, preps: [p], sub: true, parent: g.name === '시트러스 주스' ? null : g.name });
+  }));
+  DATA.groups.push(...subs);
+  // 프렙 없이 그냥 붓기만 하는 재료
+  const POUR = [['휘핑크림', '휘핑크림(서울우유)', '소', '서울우유 휘핑크림'], ['파인애플 주스', '돌 파인애플 주스', '쥐', '돌 파인애플 주스'], ['자몽주스', '나탈리스 자몽주스', '개', '나탈리스 자몽주스']];
+  POUR.forEach(([name, product, parent, q]) => DATA.groups.push({ name, sub: true, pour: true, parent, preps: [{ name, pour: true, product, q, ings: [{ n: product }] }] }));
+})();
+window.addEventListener('scroll', () => {
+  const pk = document.getElementById('picker');
+  document.getElementById('fab').classList.toggle('on', pk.getBoundingClientRect().bottom < document.querySelector('header').offsetHeight + 10);
+}, { passive: true });
+render();
+</script>
+</body>
+</html>
