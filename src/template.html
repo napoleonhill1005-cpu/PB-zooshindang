@@ -151,6 +151,8 @@ tr.hit td.name{color:var(--gold2)}
 .bulkfix{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bulkfix b{background:#2f4a2e;color:#bfe3bd;border-radius:9px;padding:8px 12px;font-family:var(--mono);font-size:17px}
 .bulkfix span{font-size:12.5px;color:var(--dim)}
+.virgin{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:#1f3550;color:#bcd6ff;margin-right:4px}
+.tile.virg{background:#18202b}
 .over{flex-basis:100%;background:#3a1d16;border:1px solid var(--red);color:#ffd2c6;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500}
 .empty{color:var(--dim);padding:40px 0;text-align:center}
 @media (max-width:640px){
@@ -180,9 +182,9 @@ const state = { sel: DATA.groups[0].name, q: '', bottle: 500, preps: {} };
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const id = (g, i) => g + '__' + i;
-const LIQUOR = new Set(['캄보 보드카','감홍로','고든스','다카라 야마나시 화이트 피치','냉동 레벨 버번','디카이퍼 바나나','디카이퍼 크렘 드 카카오 브라운','론디아즈 151','마르텔 V.S.O.P 레드배럴 꼬냑','문경바람 오크 40','바카디 카르타 블랑카','범부','베일리스 오리지널','불독 진','삼해소주','생제르망','스톨리치나야 프리미엄','아치23','아치 23','아페롤','앙고스투라 오렌지 비터','와일드터키 81 버번','이강주','지파드 메론 리큐르','콰이페','탄두아이 다크 럼','탱자씨(40도)','파이어볼','화이트 와인']);
+const LIQUOR = new Set(['캄보 보드카','콤보 라이트 럼','콤보 런던 드라이 진','콤보 보드카','세로 데 오로 데킬라','코인트루','깔루아','감홍로','고든스','다카라 야마나시 화이트 피치','냉동 레벨 버번','디카이퍼 바나나','디카이퍼 크렘 드 카카오 브라운','론디아즈 151','마르텔 V.S.O.P 레드배럴 꼬냑','문경바람 오크 40','바카디 카르타 블랑카','범부','베일리스 오리지널','불독 진','삼해소주','생제르망','스톨리치나야 프리미엄','아치23','아치 23','아페롤','앙고스투라 오렌지 비터','와일드터키 81 버번','이강주','지파드 메론 리큐르','콰이페','탄두아이 다크 럼','탱자씨(40도)','파이어볼','화이트 와인']);
 const NO_IMG = new Set(['물','착즙 레몬주스 (거른 것)','착즙 라임주스 (거른 것)','레몬','오렌지','라임','파인애플','우유','생크림','백설탕','비름(없을 시 방아잎)','2:1 석류 시럽']);
-const QUERY = {'파라스 착즙 레몬주스':'파라스 레몬주스','솔리몬 스퀴즈드 라임주스':'솔리몬 라임주스','냉동 레벨 버번':'레벨 버번 Rebel bourbon','아치23':'아치23 술','아치 23':'아치23 술','범부':'범부 술','콰이페':'콰이페 술','탱자씨(40도)':'탱자씨 40도 술','고든스':'고든스 진','스톨리치나야 프리미엄':'스톨리치나야 보드카','감홍로':'감홍로 술','삼해소주':'삼해소주 병','이강주':'이강주 병','과육제거 나탈리스 자몽주스':'나탈리스 자몽주스'};
+const QUERY = {'콤보 라이트 럼':'캄보 라이트 럼','콤보 런던 드라이 진':'캄보 런던 드라이 진','콤보 보드카':'캄보 보드카','세로 데 오로 데킬라':'세로 데 오로 데킬라 병','파라스 착즙 레몬주스':'파라스 레몬주스','솔리몬 스퀴즈드 라임주스':'솔리몬 라임주스','냉동 레벨 버번':'레벨 버번 Rebel bourbon','아치23':'아치23 술','아치 23':'아치23 술','범부':'범부 술','콰이페':'콰이페 술','탱자씨(40도)':'탱자씨 40도 술','고든스':'고든스 진','스톨리치나야 프리미엄':'스톨리치나야 보드카','감홍로':'감홍로 술','삼해소주':'삼해소주 병','이강주':'이강주 병','과육제거 나탈리스 자몽주스':'나탈리스 자몽주스'};
 const BOTTLE = '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v4l1.5 2.5A3 3 0 0 1 16 10v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V10a3 3 0 0 1 .5-1.5L10 6z"/><path d="M8 13h8"/></svg>';
 const SEARCH = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>';
 function prepIndex(name) {
@@ -222,7 +224,7 @@ const CONTAINERS = { pb: ['PB 병', 500], syrup: ['시럽 큰 병', 500], squeez
 const DEFAULT_CONT = { '쥐 치즈 폼': 'squeeze', '블루 레몬 인퓨젼': 'squeeze', '누룽지 시럽': 'syrup', '작두콩 시럽': 'syrup', '프레쉬 레몬주스': 'small', '프레쉬 라임주스': 'small' };
 const bsize = s => CONTAINERS[s.cont][1] ?? state.bottle;
 const isInfused = p => p.name.includes('인퓨즈드');
-const isMain = p => / Prep$/.test(p.name) || p.name === '호랑이 PB' || p.name.startsWith('플럼&요거트');
+const isMain = p => / (Prep|PB)$/.test(p.name) || p.name === '호랑이 PB' || p.name.startsWith('플럼&요거트');
 
 function ps(key, p) {
   if (!state.preps[key]) state.preps[key] = {
@@ -293,7 +295,7 @@ function scaleHint(v, u) {
 // ---- forgiving search: spaces/punctuation ignored, 자모 단위 오타 허용, 초성 검색 ----
 const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ', JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ', JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const SAME = {'ㅐ':'ㅔ','ㅒ':'ㅖ','ㅙ':'ㅞ','ㅚ':'ㅞ'};   // 자주 헷갈리는 모음은 같은 걸로 취급 (배일리스 = 베일리스)
-const ALIAS = {'baileys':'베일리스','bailey':'베일리스','gordons':'고든스','gin':'진','vodka':'보드카','rum':'럼','bourbon':'버번','syrup':'시럽','prep':'프렙','pb':'프렙','cheese':'치즈','foam':'폼'};
+const ALIAS = {'무알콜':'논알콜','논알코올':'논알콜','virgin':'버진','baileys':'베일리스','bailey':'베일리스','gordons':'고든스','gin':'진','vodka':'보드카','rum':'럼','bourbon':'버번','syrup':'시럽','prep':'프렙','pb':'프렙','cheese':'치즈','foam':'폼'};
 function clean(s) {
   let x = String(s).toLowerCase().replace(/[\s\-_.,·:;()/&*'"!?~]+/g, '');
   for (const [en, ko] of Object.entries(ALIAS)) x = x.split(en).join(ko);
@@ -344,6 +346,7 @@ function score(q, text) {
 function groupScore(g) {
   const q = state.q.trim(); if (!q) return 0;
   let best = score(q, g.name);
+  if (g.virgin) best = Math.min(best, score(q, '논알콜 버진 ' + g.name) - 0.5);
   for (const p of g.preps) { best = Math.min(best, score(q, p.name)); for (const i of p.ings) best = Math.min(best, score(q, i.n)); }
   return best;
 }
@@ -353,7 +356,9 @@ function matchesQ(g) { return groupScore(g) < Infinity; }
 const isInfSub = g => g.sub && (isInfused(g.preps[0]) || g.name.includes('팻워시드'));
 const SECTIONS = [
   ['벌크 운용', g => !g.sub && BULK_GROUPS.has(g.name)],
-  ['일반', g => !g.sub && !BULK_GROUPS.has(g.name) && g.name !== '시트러스 주스'],
+  ['일반', g => !g.sub && !g.virgin && !g.classic && !BULK_GROUPS.has(g.name) && g.name !== '시트러스 주스'],
+  ['논알콜', g => !!g.virgin],
+  ['클래식', g => !!g.classic],
   ['부재료 · 시럽 · 폼 · 주스', g => g.sub && !g.pour && !isInfSub(g)],
   ['인퓨즈드 술', g => isInfSub(g) && !g.pour],
   ['프렙 없음 (붓기 · 거르기만)', g => !!g.pour],
@@ -364,7 +369,7 @@ function tilesHTML() {
   const searching = !!state.q.trim();
   if (searching) groups.sort((a, b) => a[1] - b[1]);
   if (searching && groups.length && state.sel !== '__guide') state.sel = groups[0][0].name;
-  const tile = g => `<button class="tile ${g.sub ? 'subt' : ''} ${g.name === state.sel ? 'on' : ''}" data-g="${esc(g.name)}"><b>${esc(g.name)}${bulkTag(g.name)}</b><small>${g.pour ? (g.preps[0].how ? '거르기만 · ' : '붓기만 · ') + esc(g.parent) : g.sub ? (g.parent ? '→ ' + esc(g.parent) + '에 사용' : '칵테일 공용') : g.preps.map(p => esc(short(p.name))).join(' · ')}</small></button>`;
+  const tile = g => `<button class="tile ${g.sub ? 'subt' : ''} ${g.virgin ? 'virg' : ''} ${g.name === state.sel ? 'on' : ''}" data-g="${esc(g.name)}"><b>${esc(g.name)}${bulkTag(g.name)}</b><small>${g.virgin ? '논알콜 · ' + esc(g.preps[0].name) : g.pour ? (g.preps[0].how ? '거르기만 · ' : '붓기만 · ') + esc(g.parent) : g.sub ? (g.parent ? '→ ' + esc(g.parent) + '에 사용' : '칵테일 공용') : g.preps.map(p => esc(short(p.name))).join(' · ')}</small></button>`;
   const guide = `<button class="tile ${state.sel === '__guide' ? 'on' : ''}" data-g="__guide"><b>PREP GUIDE</b><small>저울·기물·소비기한</small></button>`;
   if (searching) return `<div class="pgroup"><h4>검색 결과 ${groups.length}개</h4><div class="tiles">${groups.map(x => tile(x[0])).join('') || '<span class="sub">없음</span>'}</div></div>`;
   return SECTIONS.map(([label, f]) => {
@@ -455,7 +460,7 @@ function render() {
   const g = DATA.groups.find(x => x.name === state.sel) || groups[0];
   const n = g.preps.length;
   if (g.pour) { m.innerHTML = `<h1 class="cocktail">${esc(g.name)}</h1><div class="sub">${g.preps[0].how ? '걸러서 쓰는 재료' : '프렙 없이 붓기만 하는 재료'} · <b>${esc(g.parent)}</b> 칵테일에 사용</div>` + prepCard(g, g.preps[0], 0); return; }
-  m.innerHTML = `<h1 class="cocktail">${esc(g.name)}${BULK_GROUPS.has(g.name) ? '<span class="bulk big">주로 벌크로 운용</span>' : ''}</h1><div class="sub">${g.sub ? (g.parent ? `<b>${esc(g.parent)}</b> 칵테일에 들어가는 부재료 · ` : '칵테일 공용 부재료 · ') : `프렙 ${n}개 · `} 병 수(병 종류 선택 가능) 또는 만들 g만 넣으면 재료별 양이 계산됨 · 재료를 탭하면 계량 완료 체크</div>
+  m.innerHTML = `<h1 class="cocktail">${esc(g.name)}${BULK_GROUPS.has(g.name) ? '<span class="bulk big">주로 벌크로 운용</span>' : ''}</h1><div class="sub">${g.virgin ? `<span class="virgin">논알콜</span> ${g.note}<br>` : g.sub ? (g.parent ? `<b>${esc(g.parent)}</b> 칵테일에 들어가는 부재료 · ` : '칵테일 공용 부재료 · ') : `프렙 ${n}개 · `} 병 수(병 종류 선택 가능) 또는 만들 g만 넣으면 재료별 양이 계산됨 · 재료를 탭하면 계량 완료 체크</div>
     <div class="legend"><span><span class="ico liq">${BOTTLE}</span>술 병 사진</span><span><span class="ico">${SEARCH}</span>제품 사진</span><span><span class="ico prep">↳ 레시피</span>직접 만드는 프렙으로 이동</span></div>` +
     g.preps.map((p, i) => prepCard(g, p, i)).join('');
 }
@@ -547,6 +552,11 @@ document.addEventListener('input', e => {
     subs.push({ name: p.name, preps: [p], sub: true, parent: g.name === '시트러스 주스' ? null : g.name });
   }));
   DATA.groups.push(...subs);
+  // 논알콜(버진) 칵테일: 기존 프렙을 그대로 쓰므로 바로가기로 추가
+  const findP = n => DATA.groups.flatMap(g => g.preps).find(p => p.name === n);
+  [['버진 용', '용 인퓨젼', '용', '고든스 없이 <b>용 인퓨젼</b>만 프렙해두면 돼요 · 한 잔에 용 인퓨젼 95 + 프레쉬 레몬주스 15'],
+   ['버진 양', '논알콜 양 Prep', '양', '<b>논알콜 양 Prep</b>(브로콜리 주스 + 오뚜기 메론 시럽) · 한 잔에 프렙 115 + 프레쉬 레몬주스 15']]
+    .forEach(([name, pn, parent, note]) => { const pp = findP(pn); if (pp) DATA.groups.push({ name, virgin: true, parent, note, preps: [pp] }); });
   // 프렙 없이 그냥 붓기만 하는 재료
   const POUR = [['휘핑크림', '휘핑크림(서울우유)', '소', '서울우유 휘핑크림'], ['파인애플 주스', '돌 파인애플 주스', '쥐', '돌 파인애플 주스'], ['자몽주스', '나탈리스 자몽주스', '개', '나탈리스 자몽주스', '스트레이너로 과육을 걸러낸 뒤 사용 · 걸러낸 무게로 계량']];
   POUR.forEach(([name, product, parent, q, how]) => DATA.groups.push({ name, sub: true, pour: true, parent, preps: [{ name, pour: true, product, q, how, ings: [{ n: product }] }] }));
