@@ -280,7 +280,8 @@ function scaleHint(v, u) {
   if (u !== 'g' || !(v > 0)) return '';
   if (v < 5) return '<span class="scale hi">초정밀 저울(0.01g)</span>';
   if (v <= 1000) return '<span class="scale">정밀 저울</span>';
-  const bulk = Math.floor(v / 5) * 5, rest = v - bulk;
+  v = Math.round(v * 10) / 10;
+  const bulk = Math.floor((v + 1e-9) / 5) * 5, rest = Math.round((v - bulk) * 10) / 10;
   return `<span class="scale">벌크 ${bulk.toLocaleString('ko-KR')}g` + (rest > 0.05 ? ` + 정밀 ${fmt(rest,'g')}g` : '') + '</span>';
 }
 
