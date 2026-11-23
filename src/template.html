@@ -216,7 +216,7 @@ function dateBox(p) {
   return `<div class="box datebox"><h3>날짜 기입</h3><div class="dl"><span class="sticker">${esc(label)}</span><div><b>${r.where} ${r.what}</b><span>${esc(sub)}</span></div></div><p class="rule">${esc(r.rule)} · EX) ${r.kind === 'dairy' ? 'Exp 8/7' : '8/7'}</p></div>`;
 }
 const BULK_GROUPS = new Set(['소','호랑이','뱀','말','원숭이','닭','돼지']);
-const isBulkPrep = p => [...BULK_GROUPS].some(g => p.name === g + ' Prep');
+const isBulkPrep = p => [...BULK_GROUPS].some(g => p.name === g + ' Prep') || p.name.includes('팻워시드');
 const bulkTag = n => BULK_GROUPS.has(n) ? '<span class="bulk">벌크</span>' : '';
 const CONTAINERS = { pb: ['PB 병', 500], syrup: ['시럽 큰 병', 500], squeeze: ['스퀴즈 바틀', 450], small: ['작은 병', 300] };
 const DEFAULT_CONT = { '쥐 치즈 폼': 'squeeze', '블루 레몬 인퓨젼': 'squeeze', '누룽지 시럽': 'syrup', '작두콩 시럽': 'syrup', '프레쉬 레몬주스': 'small', '프레쉬 라임주스': 'small' };
