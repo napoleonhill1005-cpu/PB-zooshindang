@@ -342,7 +342,7 @@ const SECTIONS = [
   ['일반', g => !g.sub && !BULK_GROUPS.has(g.name) && g.name !== '시트러스 주스'],
   ['부재료 · 시럽 · 폼 · 주스', g => g.sub && !g.pour && !isInfSub(g)],
   ['인퓨즈드 술', g => isInfSub(g) && !g.pour],
-  ['그냥 붓기만 (프렙 없음)', g => !!g.pour],
+  ['프렙 없음 (붓기 · 거르기만)', g => !!g.pour],
   ['가이드', () => false]];
 function short(n) { return n.replace(/ Prep$/, '').replace(/인퓨즈드/g, '').replace(/\s+/g, ' ').trim(); }
 function tilesHTML() {
@@ -350,7 +350,7 @@ function tilesHTML() {
   const searching = !!state.q.trim();
   if (searching) groups.sort((a, b) => a[1] - b[1]);
   if (searching && groups.length && state.sel !== '__guide') state.sel = groups[0][0].name;
-  const tile = g => `<button class="tile ${g.sub ? 'subt' : ''} ${g.name === state.sel ? 'on' : ''}" data-g="${esc(g.name)}"><b>${esc(g.name)}${bulkTag(g.name)}</b><small>${g.pour ? '붓기만 · ' + esc(g.parent) : g.sub ? (g.parent ? '→ ' + esc(g.parent) + '에 사용' : '칵테일 공용') : g.preps.map(p => esc(short(p.name))).join(' · ')}</small></button>`;
+  const tile = g => `<button class="tile ${g.sub ? 'subt' : ''} ${g.name === state.sel ? 'on' : ''}" data-g="${esc(g.name)}"><b>${esc(g.name)}${bulkTag(g.name)}</b><small>${g.pour ? (g.preps[0].how ? '거르기만 · ' : '붓기만 · ') + esc(g.parent) : g.sub ? (g.parent ? '→ ' + esc(g.parent) + '에 사용' : '칵테일 공용') : g.preps.map(p => esc(short(p.name))).join(' · ')}</small></button>`;
   const guide = `<button class="tile ${state.sel === '__guide' ? 'on' : ''}" data-g="__guide"><b>PREP GUIDE</b><small>저울·기물·소비기한</small></button>`;
   if (searching) return `<div class="pgroup"><h4>검색 결과 ${groups.length}개</h4><div class="tiles">${groups.map(x => tile(x[0])).join('') || '<span class="sub">없음</span>'}</div></div>`;
   return SECTIONS.map(([label, f]) => {
@@ -377,9 +377,9 @@ function renderGuide() {
 }
 
 function pourCard(p, parent) {
-  return `<section class="card"><div class="card-h"><h2>${esc(p.name)}<span class="tag">붓기만</span></h2></div>
+  return `<section class="card"><div class="card-h"><h2>${esc(p.name)}<span class="tag">${p.how ? '거르기만' : '붓기만'}</span></h2></div>
     <div class="body"><div class="pour"><a class="ico liq" style="margin:0" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(p.q)}" target="_blank" rel="noopener">${BOTTLE}</a>
-    <div><b>${esc(p.product)}</b><span>따로 만들 것 없음 · 제품 그대로 계량해서 붓기 · ${esc(parent)} 칵테일에 사용</span></div></div></div></section>`;
+    <div><b>${esc(p.product)}</b><span>${p.how ? esc(p.how) : '따로 만들 것 없음 · 제품 그대로 계량해서 붓기'} · ${esc(parent)} 칵테일에 사용</span></div></div></div></section>`;
 }
 function prepCard(g, p, idx) {
   if (p.pour) return pourCard(p, g.parent);
@@ -439,7 +439,7 @@ function render() {
   if (!groups.length) { m.innerHTML = '<div class="empty">검색 결과가 없어</div>'; return; }
   const g = DATA.groups.find(x => x.name === state.sel) || groups[0];
   const n = g.preps.length;
-  if (g.pour) { m.innerHTML = `<h1 class="cocktail">${esc(g.name)}</h1><div class="sub">프렙 없이 붓기만 하는 재료 · <b>${esc(g.parent)}</b> 칵테일에 사용</div>` + prepCard(g, g.preps[0], 0); return; }
+  if (g.pour) { m.innerHTML = `<h1 class="cocktail">${esc(g.name)}</h1><div class="sub">${g.preps[0].how ? '걸러서 쓰는 재료' : '프렙 없이 붓기만 하는 재료'} · <b>${esc(g.parent)}</b> 칵테일에 사용</div>` + prepCard(g, g.preps[0], 0); return; }
   m.innerHTML = `<h1 class="cocktail">${esc(g.name)}${BULK_GROUPS.has(g.name) ? '<span class="bulk big">주로 벌크로 운용</span>' : ''}</h1><div class="sub">${g.sub ? (g.parent ? `<b>${esc(g.parent)}</b> 칵테일에 들어가는 부재료 · ` : '칵테일 공용 부재료 · ') : `프렙 ${n}개 · `} 병 수(병 종류 선택 가능) 또는 만들 g만 넣으면 재료별 양이 계산됨 · 재료를 탭하면 계량 완료 체크</div>
     <div class="legend"><span><span class="ico liq">${BOTTLE}</span>술 병 사진</span><span><span class="ico">${SEARCH}</span>제품 사진</span><span><span class="ico prep">↳ 레시피</span>직접 만드는 프렙으로 이동</span></div>` +
     g.preps.map((p, i) => prepCard(g, p, i)).join('');
@@ -532,8 +532,8 @@ document.addEventListener('input', e => {
   }));
   DATA.groups.push(...subs);
   // 프렙 없이 그냥 붓기만 하는 재료
-  const POUR = [['휘핑크림', '휘핑크림(서울우유)', '소', '서울우유 휘핑크림'], ['파인애플 주스', '돌 파인애플 주스', '쥐', '돌 파인애플 주스'], ['자몽주스', '나탈리스 자몽주스', '개', '나탈리스 자몽주스']];
-  POUR.forEach(([name, product, parent, q]) => DATA.groups.push({ name, sub: true, pour: true, parent, preps: [{ name, pour: true, product, q, ings: [{ n: product }] }] }));
+  const POUR = [['휘핑크림', '휘핑크림(서울우유)', '소', '서울우유 휘핑크림'], ['파인애플 주스', '돌 파인애플 주스', '쥐', '돌 파인애플 주스'], ['자몽주스', '나탈리스 자몽주스', '개', '나탈리스 자몽주스', '스트레이너로 과육을 걸러낸 뒤 사용 · 걸러낸 무게로 계량']];
+  POUR.forEach(([name, product, parent, q, how]) => DATA.groups.push({ name, sub: true, pour: true, parent, preps: [{ name, pour: true, product, q, how, ings: [{ n: product }] }] }));
 })();
 window.addEventListener('scroll', () => {
   const pk = document.getElementById('picker');
