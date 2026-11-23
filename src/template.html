@@ -386,7 +386,7 @@ function prepCard(g, p, idx) {
   const key = id(g.name, idx), s = ps(key, p), c = calc(p, s), u = p.unit;
   const unitLabel = `<select class="cont" data-k="${key}" data-f="cont">${Object.entries(CONTAINERS).map(([k2, [l, v]]) => `<option value="${k2}" ${s.cont === k2 ? 'selected' : ''}>${l} ${(v ?? state.bottle).toLocaleString('ko-KR')}${u}</option>`).join('')}</select>`;
   let ctrl = '';
-  if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="number" inputmode="decimal" step="0.5" min="0" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label><button class="btn" data-k="${key}" data-act="max">최대 ${Math.floor(BULK_MAX / bsize(s) * 2) / 2}병</button></div>`;
+  if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="number" inputmode="numeric" step="1" min="0" pattern="[0-9]*" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label><button class="btn" data-k="${key}" data-act="max">최대 ${Math.floor(BULK_MAX / bsize(s))}병</button></div>`;
   else if (s.mode === 'target') {
     const kg = s.tunit === 'kg' && u === 'g';
     const shown = kg ? Math.round((+s.target || 0) / 10) / 100 : s.target;
@@ -498,12 +498,12 @@ document.addEventListener('click', e => {
   const k = a.dataset.k, p = findPrep(k), s = ps(k, p);
   if (a.dataset.act === 'inc' || a.dataset.act === 'dec') {
     const d = a.dataset.act === 'inc' ? 1 : -1;
-    if (s.mode === 'bottle') s.bottles = Math.max(0, (+s.bottles || 0) + d * 0.5);
+    if (s.mode === 'bottle') s.bottles = Math.max(0, Math.round(+s.bottles || 0) + d);
     else if (s.mode === 'target') s.target = Math.max(0, Math.round(((+s.target || 0) + d * (s.tunit === 'kg' ? 100 : 50)) * 100) / 100);
     else s.mult = Math.max(0, Math.round(((+s.mult || 0) + d) * 1000) / 1000);
     rerenderCard(k);
   } else if (a.dataset.act === 'max') {
-    if (s.mode === 'bottle') s.bottles = Math.floor(BULK_MAX / bsize(s) * 2) / 2; else s.target = BULK_MAX;
+    if (s.mode === 'bottle') s.bottles = Math.floor(BULK_MAX / bsize(s)); else s.target = BULK_MAX;
     rerenderCard(k);
   } else if (a.dataset.act === 'reset') { s.done = {}; rerenderCard(k); }
   else if (a.dataset.act === 'copy') {
@@ -521,6 +521,7 @@ document.addEventListener('input', e => {
     return;
   }
   if (t.dataset.f === 'targetIn') { const k = t.dataset.k, s = ps(k, findPrep(k)); const v = parseFloat(t.value); s.target = isNaN(v) ? '' : (s.tunit === 'kg' ? v * 1000 : v); rerenderCard(k); return; }
+  if (t.dataset.f === 'bottles') { const k = t.dataset.k; const v = t.value === '' ? '' : Math.max(0, Math.round(parseFloat(t.value) || 0)); ps(k, findPrep(k)).bottles = v; rerenderCard(k); return; }
   if (t.dataset.f) { const k = t.dataset.k; ps(k, findPrep(k))[t.dataset.f] = t.value; rerenderCard(k); }
 });
 // 부재료(시럽·폼·인퓨전·주스)를 칵테일 밖에서도 따로 볼 수 있게 독립 항목으로 추가
