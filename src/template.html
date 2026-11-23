@@ -250,7 +250,7 @@ function calc(p, s) {
       const real = strained > 0 ? strained : null;
       return { ...i, base: null, amt: real ?? est, estimated: real === null };
     }
-    return { ...i, base: i.a, amt: i.a * mult };
+    return { ...i, base: i.a, amt: i.f ? i.a : i.a * mult };
   });
   const inputTotal = rows.reduce((t, r) => t + (r.t ? r.amt : 0), 0);
   // 1:1 syrup: finished syrup = strained liquid + same weight of sugar
@@ -407,7 +407,7 @@ function prepCard(g, p, idx) {
     let extra = '';
     if (r.k === 'match') extra = `<div class="match"><span>걸러낸 액체 무게</span><input data-k="${key}" data-f="strained" type="number" inputmode="decimal" placeholder="g" value="${esc(s.strained)}"></div>` + (r.estimated ? '<span class="est">예상치 · 걸러낸 무게 입력 시 1:1로 확정</span>' : '<span class="est">걸러낸 무게와 1:1</span>');
     return `<tr class="${s.done[i] ? 'done' : ''} ${isHit(r.n) ? 'hit' : ''}">
-      <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.t ? '' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
+      <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.f ? '<span class="x">고정량 · 만드는 양과 상관없음 (데치기용)</span>' : r.t ? '' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
       <td class="num hide-m">${r.base === null ? '1:1' : fmt(r.base, r.u)}</td>
       <td class="num">${pct === null ? '–' : pct.toFixed(1) + '%'}</td>
       <td><span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}${extra}</td></tr>`;
