@@ -406,7 +406,7 @@ function prepCard(g, p, idx) {
   const unitLabel = `<select class="cont" data-k="${key}" data-f="cont">${Object.entries(CONTAINERS).map(([k2, [l, v]]) => `<option value="${k2}" ${s.cont === k2 ? 'selected' : ''}>${l} ${(v ?? state.bottle).toLocaleString('ko-KR')}${u}</option>`).join('')}</select>`;
   let ctrl = '';
   if (s.mode === 'bulk') ctrl = `<div class="bulkfix"><b>벌크 3.5kg</b><span>벌크로 만드는 프렙이라 병 수 계산 없이 항상 3,500g 기준</span></div>`;
-  else if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="number" inputmode="numeric" step="1" min="0" pattern="[0-9]*" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label><button class="btn" data-k="${key}" data-act="max">최대 ${Math.floor(BULK_MAX / bsize(s))}병</button></div>`;
+  else if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="number" inputmode="numeric" step="1" min="0" pattern="[0-9]*" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label></div>`;
   else if (s.mode === 'target') {
     const kg = s.tunit === 'kg' && u === 'g';
     const shown = kg ? Math.round((+s.target || 0) / 10) / 100 : s.target;
@@ -440,7 +440,7 @@ function prepCard(g, p, idx) {
   return `<section class="card ${hitCard ? 'hitcard' : ''}" id="c-${key}" data-pname="${esc(p.name)}">
     <div class="card-h"><h2>${esc(p.name)}${isMain(p) ? '<span class="tag">PB</span>' : ''}</h2>
 </div>
-    <div class="ctrl">${ctrl}<div class="formula">${formula}</div>${c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
+    <div class="ctrl">${ctrl}<div class="formula">${formula}</div>${s.mode !== 'bottle' && c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
     <table><thead><tr><th>재료 (탭해서 체크)</th><th class="hide-m">1배합</th><th>비율</th><th>넣을 양</th></tr></thead><tbody>${rows}${tot}</tbody></table>
     <div class="body">
       ${dateBox(p)}
