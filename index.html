@@ -162,6 +162,8 @@ tr.hit td.name{color:var(--gold2)}
 .ancbar b{color:var(--gold2);font-size:14px}
 .ancbar span{font-size:12.5px;color:var(--dim);flex:1 1 160px}
 tr.tot .x{display:block;font-size:11px;color:var(--faint);font-weight:400;margin-top:2px}
+.glink{flex-basis:100%;text-align:left;background:none;border:0;padding:2px 0;color:var(--faint);font-size:12px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.glink:active{color:var(--gold2)}
 .over{flex-basis:100%;background:#3a1d16;border:1px solid var(--red);color:#ffd2c6;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500}
 .empty{color:var(--dim);padding:40px 0;text-align:center}
 @media (max-width:640px){
@@ -237,6 +239,7 @@ const isMain = p => / (Prep|PB)$/.test(p.name) || p.name === '호랑이 PB' || p
 
 function ps(key, p) {
   if (!state.preps[key]) state.preps[key] = {
+    def: isBulkPrep(p) ? 'bulk' : isMain(p) || DEFAULT_CONT[p.name] ? 'bottle' : 'target',
     mode: isBulkPrep(p) ? 'bulk' : isMain(p) || DEFAULT_CONT[p.name] ? 'bottle' : 'target', tunit: isInfused(p) ? 'kg' : 'g', cont: DEFAULT_CONT[p.name] || 'pb',
     bottles: 1, target: null, mult: p.mult, strained: '', done: {}
   };
@@ -425,7 +428,7 @@ function prepCard(g, p, idx) {
     const presets = u === 'g' ? [500, 1000, 2000, 3000, 3500] : [500, 1000, 2000, 3500];
     ctrl = `<div class="qty"><label>만들 양</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="targetIn" type="text" inputmode="decimal" step="${kg ? 0.1 : 50}" min="0" value="${shown}" style="width:96px"><button data-k="${key}" data-act="inc">+</button></div>` +
       (u === 'g' ? `<div class="modes"><button data-k="${key}" data-tu="g" class="${kg ? '' : 'on'}">g</button><button data-k="${key}" data-tu="kg" class="${kg ? 'on' : ''}">kg</button></div>` : `<label>${u}</label>`) +
-      `</div><div class="presets">${presets.map(v => `<button class="pre ${Math.abs((+s.target||0) - v) < 0.01 ? 'on' : ''}" data-k="${key}" data-pre="${v}">${v >= 1000 && u === 'g' ? v / 1000 + 'kg' : v.toLocaleString('ko-KR') + u}${v === BULK_MAX ? ' 최대' : ''}</button>`).join('')}</div>`;
+      `</div><div class="presets">${presets.map(v => `<button class="pre ${Math.abs((+s.target||0) - v) < 0.01 ? 'on' : ''}" data-k="${key}" data-pre="${v}">${v >= 1000 && u === 'g' ? v / 1000 + 'kg' : v.toLocaleString('ko-KR') + u}${v === BULK_MAX && (isBulkPrep(p) || isInfused(p)) ? ' 최대' : ''}</button>`).join('')}</div>`;
   }
   else ctrl = `<div class="qty"><label>배수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="mult" type="number" inputmode="decimal" step="1" min="0" value="${s.mult}"><button data-k="${key}" data-act="inc">+</button></div><label>엑셀 기본 ×${fmtMult(p.mult)}</label></div>`;
 
@@ -456,7 +459,9 @@ function prepCard(g, p, idx) {
   return `<section class="card ${hitCard ? 'hitcard' : ''}" id="c-${key}" data-pname="${esc(p.name)}">
     <div class="card-h"><h2>${esc(p.name)}${isMain(p) ? '<span class="tag">PB</span>' : ''}</h2>
 </div>
-    <div class="ctrl">${s.anchorIdx != null ? `<div class="ancbar"><b>재료 부족 모드</b><span>${esc(p.ings[s.anchorIdx].n)}에 실제 있는 양을 넣으면 나머지가 같은 비율로 줄어요</span><button class="btn" data-k="${key}" data-act="unanchor">원래대로</button></div>` : ctrl}<div class="formula">${formula}</div>${s.mode !== 'bottle' && c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
+    <div class="ctrl">${s.anchorIdx != null ? `<div class="ancbar"><b>재료 부족 모드</b><span>${esc(p.ings[s.anchorIdx].n)}에 실제 있는 양을 넣으면 나머지가 같은 비율로 줄어요</span><button class="btn" data-k="${key}" data-act="unanchor">원래대로</button></div>` : ctrl}<div class="formula">${formula}</div>${s.def !== 'target' && s.anchorIdx == null ? (s.mode === 'target'
+      ? `<button class="glink" data-k="${key}" data-mode="${s.def}">← ${s.def === 'bulk' ? '벌크 3.5kg' : '병 수'}로 돌아가기</button>`
+      : `<button class="glink" data-k="${key}" data-gmode="1">g으로 직접 입력 (계산기)</button>`) : ''}${(isBulkPrep(p) || isInfused(p)) && s.mode !== 'bottle' && c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
     <table><thead><tr><th>재료 (탭해서 체크)</th><th class="hide-m">1배합</th><th>비율</th><th>넣을 양</th></tr></thead><tbody>${rows}${tot}</tbody></table>
     <div class="body">
       ${dateBox(p)}
@@ -506,6 +511,8 @@ document.addEventListener('click', e => {
   if (e.target.closest('a.ico')) return;
   const tu = e.target.closest('[data-tu]');
   if (tu) { const k = tu.dataset.k; ps(k, findPrep(k)).tunit = tu.dataset.tu; rerenderCard(k); return; }
+  const gm = e.target.closest('[data-gmode]');
+  if (gm) { const k = gm.dataset.k, p = findPrep(k), s = ps(k, p); const c = calc(p, s); s.target = Math.round(c.finish); s.tunit = 'g'; s.mode = 'target'; rerenderCard(k); const inp = document.querySelector(`[data-k="${CSS.escape(k)}"][data-f="targetIn"]`); if (inp) { inp.focus(); inp.select(); } return; }
   const an = e.target.closest('[data-anchor]');
   if (an) { const k = an.dataset.k, p = findPrep(k), s = ps(k, p); const c = calc(p, s); const i = +an.dataset.anchor; s.anchorIdx = i; s.anchorAmt = Math.round(c.rows[i].amt * 10) / 10; rerenderCard(k); const inp = document.querySelector(`[data-k="${CSS.escape(k)}"][data-f="anchorAmt"]`); if (inp) { inp.focus(); inp.select(); } return; }
   const pr = e.target.closest('[data-pre]');
