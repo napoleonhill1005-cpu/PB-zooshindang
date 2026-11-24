@@ -166,6 +166,9 @@ tr.tot .x{display:block;font-size:11px;color:var(--faint);font-weight:400;margin
 .glink:active{color:var(--gold2)}
 .alcbar{padding:10px 18px 0;background:#1a1613}
 .alcbar .modes{display:inline-flex}
+.subrow td{padding:0 18px 12px 45px;border-bottom:1px solid #2c2621;text-align:left}
+.subbd{font-size:12px;color:#9cc59a;background:#1c261c;border:1px solid #2f4a2e;border-radius:8px;padding:7px 10px;line-height:1.6}
+.subbd b{font-family:var(--mono);color:#cfeccd}
 .over{flex-basis:100%;background:#3a1d16;border:1px solid var(--red);color:#ffd2c6;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500}
 .empty{color:var(--dim);padding:40px 0;text-align:center}
 @media (max-width:640px){
@@ -204,6 +207,14 @@ function prepIndex(name) {
   const norm = s => s.replace(/\s+/g, '');
   for (const g of [...DATA.groups.filter(x => x.sub), ...DATA.groups]) for (let i = 0; i < g.preps.length; i++) if (norm(g.preps[i].name) === norm(name)) return id(g.name, i);
   return null;
+}
+// 직접 만드는 프렙 재료: 이 양을 만들려면 하위 재료가 얼마나 필요한지
+function subBreakdown(n, amt) {
+  const pk = prepIndex(n); if (!pk || !(amt > 0)) return '';
+  const sp = findPrep(pk); if (!sp || sp.pour) return '';
+  const c = calc(sp, { mode: 'target', target: amt, strained: '' });
+  const parts = c.rows.filter(r => r.amt > 0).map(r => `${esc(r.n.replace(/\(.*?\)/g, '').trim())} <b>${fmt(r.amt, r.u)}${r.u}</b>${r.f ? '(고정)' : ''}${r.k === 'match' ? '(걸러낸 액체와 1:1)' : ''}`);
+  return `<div class="subbd">↳ ${fmt(amt, 'g')}g 만들려면: ${parts.join(' · ')}</div>`;
 }
 function nameExtra(n) {
   const pk = prepIndex(n);
@@ -449,6 +460,7 @@ function prepCard(g, p, idx) {
   const rows = c.rows.map((r, i) => {
     const pct = r.cnt && c.inputTotal && !c.bi.hasMatch ? (r.amt / c.inputTotal * 100) : null;
     let extra = '';
+    const sb = s.done[i] ? '' : subBreakdown(r.n, r.amt);
     if (r.k === 'match') extra = `<div class="match"><span>걸러낸 액체 무게</span><input data-k="${key}" data-f="strained" type="text" inputmode="decimal" placeholder="g" value="${esc(s.strained)}"></div>` + (r.estimated ? '<span class="est">예상치 · 걸러낸 무게 입력 시 1:1로 확정</span>' : '<span class="est">걸러낸 무게와 1:1</span>');
     return `<tr class="${s.done[i] ? 'done' : ''} ${isHit(r.n) ? 'hit' : ''}">
       <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.addon ? '<span class="x">알콜 용일 때만 · 인퓨전과 섞기</span>' : r.f ? '<span class="x">고정량 · 만드는 양과 상관없음 (데치기용)</span>' : r.t ? '' : r.cnt ? '<span class="x">나중에 걸러냄 · 투입 총합에 포함</span>' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
@@ -456,7 +468,7 @@ function prepCard(g, p, idx) {
       <td class="num">${pct === null ? '–' : pct.toFixed(1) + '%'}</td>
       <td>${s.anchorIdx === i
         ? `<div class="anc"><input data-k="${key}" data-f="anchorAmt" type="text" inputmode="decimal" value="${esc(s.anchorAmt)}" placeholder="있는 양"><small>${r.u}</small></div><span class="est">이 양 기준으로 나머지 재계산 중</span>`
-        : `<span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}`}${extra}${r.k === 'normal' && !r.f && !r.addon && r.u !== '개' && s.anchorIdx !== i ? `<button class="short" data-k="${key}" data-anchor="${i}">부족해요 · 있는 양 입력</button>` : ''}</td></tr>`;
+        : `<span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}`}${extra}${r.k === 'normal' && !r.f && !r.addon && r.u !== '개' && s.anchorIdx !== i ? `<button class="short" data-k="${key}" data-anchor="${i}">부족해요 · 있는 양 입력</button>` : ''}</td></tr>${sb ? `<tr class="subrow"><td colspan="4">${sb}</td></tr>` : ''}`;
   }).join('');
 
   const tot = `<tr class="tot"><td>${p.yf !== 1 ? '투입 합계 → 완성량(×4/5)' : c.bi.hasMatch ? '완성 시럽 (걸러낸 액체 + 설탕)' : c.strainedOut ? '투입 총합' : '총량'}${c.strainedOut ? `<span class="x">걸러낸 뒤 약 ${fmt(c.finish - c.strainedOut, u)}${u} 남음 (흡수량 별도)</span>` : ''}</td><td class="num hide-m">${baseStr}</td><td class="num">100%</td>
