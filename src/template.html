@@ -153,6 +153,15 @@ tr.hit td.name{color:var(--gold2)}
 .bulkfix span{font-size:12.5px;color:var(--dim)}
 .virgin{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:#1f3550;color:#bcd6ff;margin-right:4px}
 .tile.virg{background:#18202b}
+.short{display:block;margin:6px 0 0 auto;background:none;border:1px dashed var(--faint);color:var(--dim);border-radius:7px;padding:4px 8px;font-size:11.5px;cursor:pointer;white-space:nowrap}
+.short:active{background:var(--line)}
+.anc{display:flex;align-items:center;gap:4px;justify-content:flex-end}
+.anc input{width:110px;background:#2b2216;border:1.5px solid var(--gold);border-radius:8px;padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--gold2);outline:none}
+.anc small{color:var(--dim)}
+.ancbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#2b2216;border:1px solid #7a5a24;border-radius:10px;padding:9px 12px;flex-basis:100%}
+.ancbar b{color:var(--gold2);font-size:14px}
+.ancbar span{font-size:12.5px;color:var(--dim);flex:1 1 160px}
+tr.tot .x{display:block;font-size:11px;color:var(--faint);font-weight:400;margin-top:2px}
 .over{flex-basis:100%;background:#3a1d16;border:1px solid var(--red);color:#ffd2c6;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:500}
 .empty{color:var(--dim);padding:40px 0;text-align:center}
 @media (max-width:640px){
@@ -256,6 +265,9 @@ function calc(p, s) {
     finishTarget = s.mode === 'bulk' ? BULK_MAX : s.mode === 'bottle' ? (+s.bottles || 0) * bsize(s) : (+s.target || 0);
     mult = bi.base ? finishTarget / p.yf / bi.base : 0;
   }
+  // 재료가 부족할 때: 있는 양(g)을 넣은 재료 기준으로 전체 비율 재계산
+  const anc = s.anchorIdx != null ? p.ings[s.anchorIdx] : null;
+  if (anc && parseFloat(s.anchorAmt) > 0) { mult = parseFloat(s.anchorAmt) / anc.a; finishTarget = null; }
   const strained = parseFloat(s.strained);
   const rows = p.ings.map(i => {
     if (i.k === 'match') {
@@ -406,12 +418,12 @@ function prepCard(g, p, idx) {
   const unitLabel = `<select class="cont" data-k="${key}" data-f="cont">${Object.entries(CONTAINERS).map(([k2, [l, v]]) => `<option value="${k2}" ${s.cont === k2 ? 'selected' : ''}>${l} ${(v ?? state.bottle).toLocaleString('ko-KR')}${u}</option>`).join('')}</select>`;
   let ctrl = '';
   if (s.mode === 'bulk') ctrl = `<div class="bulkfix"><b>벌크 3.5kg</b><span>벌크로 만드는 프렙이라 병 수 계산 없이 항상 3,500g 기준</span></div>`;
-  else if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="number" inputmode="numeric" step="1" min="0" pattern="[0-9]*" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label></div>`;
+  else if (s.mode === 'bottle') ctrl = `<div class="qty"><label>만들 병 수</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="bottles" type="text" inputmode="numeric" step="1" min="0" pattern="[0-9]*" value="${s.bottles}"><button data-k="${key}" data-act="inc">+</button></div><label>${unitLabel}</label></div>`;
   else if (s.mode === 'target') {
     const kg = s.tunit === 'kg' && u === 'g';
     const shown = kg ? Math.round((+s.target || 0) / 10) / 100 : s.target;
     const presets = u === 'g' ? [500, 1000, 2000, 3000, 3500] : [500, 1000, 2000, 3500];
-    ctrl = `<div class="qty"><label>만들 양</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="targetIn" type="number" inputmode="decimal" step="${kg ? 0.1 : 50}" min="0" value="${shown}" style="width:96px"><button data-k="${key}" data-act="inc">+</button></div>` +
+    ctrl = `<div class="qty"><label>만들 양</label><div class="step"><button data-k="${key}" data-act="dec">−</button><input data-k="${key}" data-f="targetIn" type="text" inputmode="decimal" step="${kg ? 0.1 : 50}" min="0" value="${shown}" style="width:96px"><button data-k="${key}" data-act="inc">+</button></div>` +
       (u === 'g' ? `<div class="modes"><button data-k="${key}" data-tu="g" class="${kg ? '' : 'on'}">g</button><button data-k="${key}" data-tu="kg" class="${kg ? 'on' : ''}">kg</button></div>` : `<label>${u}</label>`) +
       `</div><div class="presets">${presets.map(v => `<button class="pre ${Math.abs((+s.target||0) - v) < 0.01 ? 'on' : ''}" data-k="${key}" data-pre="${v}">${v >= 1000 && u === 'g' ? v / 1000 + 'kg' : v.toLocaleString('ko-KR') + u}${v === BULK_MAX ? ' 최대' : ''}</button>`).join('')}</div>`;
   }
@@ -419,18 +431,22 @@ function prepCard(g, p, idx) {
 
   const baseStr = fmt(c.bi.base, u) + u;
   let formula;
-  if (s.mode === 'mult') formula = `1배합 합계 ${baseStr} × <b>${fmtMult(c.mult)}</b> = 투입 ${fmt(c.inputTotal,u)}${u}` + (p.yf !== 1 ? ` → ×4/5 완성 <b>${fmt(c.finish,u)}${u}</b>` : '');
+  const ancRow = s.anchorIdx != null && parseFloat(s.anchorAmt) > 0 ? p.ings[s.anchorIdx] : null;
+  if (ancRow) formula = `배수 = ${esc(ancRow.n)} 있는 양 ${fmt(+s.anchorAmt, ancRow.u)}${ancRow.u} ÷ 1배합 ${fmt(ancRow.a, ancRow.u)}${ancRow.u} = <b>×${fmtMult(c.mult)}</b>`;
+  else if (s.mode === 'mult') formula = `1배합 합계 ${baseStr} × <b>${fmtMult(c.mult)}</b> = 투입 ${fmt(c.inputTotal,u)}${u}` + (p.yf !== 1 ? ` → ×4/5 완성 <b>${fmt(c.finish,u)}${u}</b>` : '');
   else formula = `배수 = ${s.mode === 'bulk' ? '벌크 ' : s.mode === 'bottle' ? s.bottles + '병 × ' + bsize(s) + u + ' = ' : '목표 '}${fmt(c.finishTarget,u)}${u}` + (p.yf !== 1 ? ' ÷ 0.8(손실)' : '') + ` ÷ 1배합 합계 ${baseStr} = <b>×${fmtMult(c.mult)}</b>`;
 
   const rows = c.rows.map((r, i) => {
     const pct = r.cnt && c.inputTotal && !c.bi.hasMatch ? (r.amt / c.inputTotal * 100) : null;
     let extra = '';
-    if (r.k === 'match') extra = `<div class="match"><span>걸러낸 액체 무게</span><input data-k="${key}" data-f="strained" type="number" inputmode="decimal" placeholder="g" value="${esc(s.strained)}"></div>` + (r.estimated ? '<span class="est">예상치 · 걸러낸 무게 입력 시 1:1로 확정</span>' : '<span class="est">걸러낸 무게와 1:1</span>');
+    if (r.k === 'match') extra = `<div class="match"><span>걸러낸 액체 무게</span><input data-k="${key}" data-f="strained" type="text" inputmode="decimal" placeholder="g" value="${esc(s.strained)}"></div>` + (r.estimated ? '<span class="est">예상치 · 걸러낸 무게 입력 시 1:1로 확정</span>' : '<span class="est">걸러낸 무게와 1:1</span>');
     return `<tr class="${s.done[i] ? 'done' : ''} ${isHit(r.n) ? 'hit' : ''}">
       <td class="name" data-k="${key}" data-i="${i}"><span class="ck"></span>${esc(r.n)}${nameExtra(r.n)}${r.f ? '<span class="x">고정량 · 만드는 양과 상관없음 (데치기용)</span>' : r.t ? '' : r.cnt ? '<span class="x">나중에 걸러냄 · 투입 총합에 포함</span>' : '<span class="x">총량 제외 (걸러내거나 개수 단위)</span>'}</td>
       <td class="num hide-m">${r.base === null ? '1:1' : fmt(r.base, r.u)}</td>
       <td class="num">${pct === null ? '–' : pct.toFixed(1) + '%'}</td>
-      <td><span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}${extra}</td></tr>`;
+      <td>${s.anchorIdx === i
+        ? `<div class="anc"><input data-k="${key}" data-f="anchorAmt" type="text" inputmode="decimal" value="${esc(s.anchorAmt)}" placeholder="있는 양"><small>${r.u}</small></div><span class="est">이 양 기준으로 나머지 재계산 중</span>`
+        : `<span class="amt">${fmt(r.amt, r.u)}<small>${r.u}</small></span>${kgLine(r.amt, r.u)}${scaleHint(r.amt, r.u)}`}${extra}${r.k === 'normal' && !r.f && r.u !== '개' && s.anchorIdx !== i ? `<button class="short" data-k="${key}" data-anchor="${i}">부족해요 · 있는 양 입력</button>` : ''}</td></tr>`;
   }).join('');
 
   const tot = `<tr class="tot"><td>${p.yf !== 1 ? '투입 합계 → 완성량(×4/5)' : c.bi.hasMatch ? '완성 시럽 (걸러낸 액체 + 설탕)' : c.strainedOut ? '투입 총합' : '총량'}${c.strainedOut ? `<span class="x">걸러낸 뒤 약 ${fmt(c.finish - c.strainedOut, u)}${u} 남음 (흡수량 별도)</span>` : ''}</td><td class="num hide-m">${baseStr}</td><td class="num">100%</td>
@@ -440,7 +456,7 @@ function prepCard(g, p, idx) {
   return `<section class="card ${hitCard ? 'hitcard' : ''}" id="c-${key}" data-pname="${esc(p.name)}">
     <div class="card-h"><h2>${esc(p.name)}${isMain(p) ? '<span class="tag">PB</span>' : ''}</h2>
 </div>
-    <div class="ctrl">${ctrl}<div class="formula">${formula}</div>${s.mode !== 'bottle' && c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
+    <div class="ctrl">${s.anchorIdx != null ? `<div class="ancbar"><b>재료 부족 모드</b><span>${esc(p.ings[s.anchorIdx].n)}에 실제 있는 양을 넣으면 나머지가 같은 비율로 줄어요</span><button class="btn" data-k="${key}" data-act="unanchor">원래대로</button></div>` : ctrl}<div class="formula">${formula}</div>${s.mode !== 'bottle' && c.finish > BULK_MAX + 0.01 ? `<div class="over">벌크 최대치 3,500${u}를 넘었어 (${fmt(c.finish,u)}${u}). 두 번에 나눠서 만들어줘</div>` : ''}</div>
     <table><thead><tr><th>재료 (탭해서 체크)</th><th class="hide-m">1배합</th><th>비율</th><th>넣을 양</th></tr></thead><tbody>${rows}${tot}</tbody></table>
     <div class="body">
       ${dateBox(p)}
@@ -477,10 +493,11 @@ function rerenderCard(key) {
   const focused = document.activeElement;
   const f = focused && focused.dataset ? focused.dataset.f : null;
   const pos = focused && focused.selectionStart;
+  const rawVal = focused && 'value' in focused ? focused.value : '';
   const tmp = document.createElement('div');
   tmp.innerHTML = prepCard(g, g.preps[+i], +i);
   el.replaceWith(tmp.firstElementChild);
-  if (f) { const ni = document.querySelector(`[data-k="${CSS.escape(key)}"][data-f="${f}"]`); if (ni) { ni.focus(); try { ni.setSelectionRange(pos, pos); } catch(e) {} } }
+  if (f) { const ni = document.querySelector(`[data-k="${CSS.escape(key)}"][data-f="${f}"]`); if (ni) { if (ni.tagName === 'INPUT') ni.value = rawVal; ni.focus(); try { ni.setSelectionRange(pos, pos); } catch(e) {} } }
 }
 
 function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('on'), 1600); }
@@ -489,6 +506,8 @@ document.addEventListener('click', e => {
   if (e.target.closest('a.ico')) return;
   const tu = e.target.closest('[data-tu]');
   if (tu) { const k = tu.dataset.k; ps(k, findPrep(k)).tunit = tu.dataset.tu; rerenderCard(k); return; }
+  const an = e.target.closest('[data-anchor]');
+  if (an) { const k = an.dataset.k, p = findPrep(k), s = ps(k, p); const c = calc(p, s); const i = +an.dataset.anchor; s.anchorIdx = i; s.anchorAmt = Math.round(c.rows[i].amt * 10) / 10; rerenderCard(k); const inp = document.querySelector(`[data-k="${CSS.escape(k)}"][data-f="anchorAmt"]`); if (inp) { inp.focus(); inp.select(); } return; }
   const pr = e.target.closest('[data-pre]');
   if (pr) { const k = pr.dataset.k; ps(k, findPrep(k)).target = +pr.dataset.pre; rerenderCard(k); return; }
   const jb = e.target.closest('[data-jump]');
@@ -525,10 +544,11 @@ document.addEventListener('click', e => {
   } else if (a.dataset.act === 'max') {
     if (s.mode === 'bottle') s.bottles = Math.floor(BULK_MAX / bsize(s)); else s.target = BULK_MAX;
     rerenderCard(k);
+  } else if (a.dataset.act === 'unanchor') { s.anchorIdx = null; s.anchorAmt = ''; rerenderCard(k);
   } else if (a.dataset.act === 'reset') { s.done = {}; rerenderCard(k); }
   else if (a.dataset.act === 'copy') {
     const c = calc(p, s), u = p.unit;
-    const head = s.mode === 'bulk' ? '벌크 3.5kg (3500g)' : s.mode === 'bottle' ? `${s.bottles}병 (${CONTAINERS[s.cont][0]} ${bsize(s)}${u})` : (u === 'g' && +s.target >= 1000 ? `${s.target / 1000}kg (${s.target}g)` : `${s.target}${u}`);
+    const head = s.anchorIdx != null && parseFloat(s.anchorAmt) > 0 ? `${p.ings[s.anchorIdx].n} ${s.anchorAmt}${p.ings[s.anchorIdx].u} 기준` : s.mode === 'bulk' ? '벌크 3.5kg (3500g)' : s.mode === 'bottle' ? `${s.bottles}병 (${CONTAINERS[s.cont][0]} ${bsize(s)}${u})` : (u === 'g' && +s.target >= 1000 ? `${s.target / 1000}kg (${s.target}g)` : `${s.target}${u}`);
     const txt = `[${p.name}] ${head} (배수 ×${fmtMult(c.mult)})\n` + c.rows.map(r => `- ${r.n}: ${fmt(r.amt, r.u)}${r.u}${r.k === 'match' && r.estimated ? ' (예상, 걸러낸 무게와 1:1)' : ''}`).join('\n') + `\n= 총 ${fmt(c.finish, u)}${u}`;
     navigator.clipboard.writeText(txt).then(() => toast('복사됨')).catch(() => toast('복사가 막혀 있어. 길게 눌러 선택해줘'));
   }
