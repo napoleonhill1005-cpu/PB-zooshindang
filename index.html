@@ -146,6 +146,7 @@ tr.hit td.name{color:var(--gold2)}
 .dl span{display:block;font-size:12px;color:var(--dim);margin-top:2px}
 .datebox .rule{font-size:11.5px;color:#7f93b5;margin-top:8px}
 .pour{display:flex;align-items:center;gap:12px}
+.pour + .datebox{margin-top:14px}
 .pour b{display:block;font-size:16px}
 .pour span{display:block;font-size:13px;color:var(--dim);margin-top:3px}
 .bulkfix{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -226,7 +227,7 @@ function nameExtra(n) {
 }
 const BULK_MAX = 3500;
 // 날짜 기입 규칙 (PREP GUIDE 4. 소비기한의 관리)
-const DAIRY = /우유|생크림|요구르트|요거트/;
+const DAIRY = /우유|생크림|요구르트|요거트|휘핑/;
 function dateRule(p) {
   if (/레몬주스|라임주스/.test(p.name) && p.name.startsWith('프레쉬')) return { kind: 'citrus', where: '병에', what: '착즙일', rule: '시트러스 착즙류 → 착즙일(영업개시일 기준) 기입' };
   const dairy = p.ings.filter(i => DAIRY.test(i.n)).map(i => i.n.trim());
@@ -430,7 +431,7 @@ function renderGuide() {
 function pourCard(p, parent) {
   return `<section class="card"><div class="card-h"><h2>${esc(p.name)}<span class="tag">${p.how ? '거르기만' : '붓기만'}</span></h2></div>
     <div class="body"><div class="pour"><a class="ico liq" style="margin:0" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(p.q)}" target="_blank" rel="noopener">${BOTTLE}</a>
-    <div><b>${esc(p.product)}</b><span>${p.how ? esc(p.how) : '따로 만들 것 없음 · 제품 그대로 계량해서 붓기'} · ${esc(parent)} 칵테일에 사용</span></div></div></div></section>`;
+    <div><b>${esc(p.product)}</b><span>${p.how ? esc(p.how) : '따로 만들 것 없음 · 제품 그대로 계량해서 붓기'} · ${esc(parent)} 칵테일에 사용</span></div></div>${dateRule(p).kind === 'dairy' ? dateBox(p) : ''}</div></section>`;
 }
 function prepCard(g, p, idx) {
   if (p.pour) return pourCard(p, g.parent);
